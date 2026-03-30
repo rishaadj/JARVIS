@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS HUD</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+</head>
+
+<body class="stark-theme">
+    <div class="scanline"></div>
+    <div class="vignette"></div>
+
+    <div class="hud-container">
+
+        <header class="hud-header">
+            <div class="system-status">
+                <div class="status-box">
+                    <span class="label">CORE_STATUS</span>
+                    <span id="status-text" class="value">ACTIVE</span>
+                </div>
+            </div>
+
+            <div class="logo-area">
+                <span class="stark-logo">JARVIS</span>
+            </div>
+
+            <div class="clock-area glass-card">
+                <div class="time-main">
+                    <span id="live-time">00:00:00</span>
+                    <span id="live-millis">.000</span>
+                </div>
+                <div class="time-sub">
+                    <div class="date-str">{{ date_str }}</div>
+                    <div class="timezone">UTC +05:30</div>
+                </div>
+                <div class="uptime-row">
+                    <span class="label">UPTIME:</span>
+                    <span id="uptime-val">00h 00m 00s</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="hud-main">
+
+            <!-- LEFT -->
+            <section class="left-panels">
+                <!-- 👁️ VISUAL AWARENESS (NEW) -->
+                <div class="glass-card observer-panel">
+                    <div class="card-header">VISUAL_AWARENESS</div>
+                    <div class="observer-content">
+                        <div id="observer-scan-container" class="scan-container">
+                            <div class="scan-overlay"></div>
+                            <img id="last-scan-img" src="" alt="Awaiting Scan..." class="scan-img">
+                        </div>
+                        <div id="observer-context" class="observer-text">
+                            Initializing neural vision...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card sys-vitals">
+                    <div class="card-header">SYSTEM_METRICS</div>
+                    <div class="vitals-grid">
+                        <div class="vital-item">
+                            <span class="label">CPU</span>
+                            <div class="progress-bar">
+                                <div id="cpu-bar" class="fill"></div>
+                            </div>
+                        </div>
+                        <div class="vital-item">
+                            <span class="label">MEMORY</span>
+                            <div class="progress-bar">
+                                <div id="mem-bar" class="fill"></div>
+                            </div>
+                        </div>
+                        <div class="vital-item">
+                            <span class="label">LATENCY</span>
+                            <span id="latency-val">0ms</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CORE -->
+            <section class="center-panel">
+                <div class="arc-reactor">
+                    <svg viewBox="0 0 200 200" class="reactor-svg">
+                        <!-- Outer Ring -->
+                        <circle cx="100" cy="100" r="90" class="ring outer" />
+                        <circle cx="100" cy="100" r="90" class="ring outer-dash" stroke-dasharray="10, 20" />
+                        
+                        <!-- Middle Ring -->
+                        <circle cx="100" cy="100" r="70" class="ring middle" stroke-dasharray="5, 5" />
+                        
+                        <!-- Inner Ring -->
+                        <circle cx="100" cy="100" r="50" class="ring inner" />
+                        
+                        <!-- Core -->
+                        <circle cx="100" cy="100" r="30" class="core-circle" />
+                    </svg>
+                    <div id="core-glow" class="core-glow"></div>
+                </div>
+            </section>
+
+            <!-- RIGHT -->
+            <section class="transcript-section">
+                <!-- 🤖 ACTIVE SUBSYSTEMS (NEW) -->
+                <div class="glass-card agents-hud">
+                    <div class="card-header">ACTIVE_SUBSYSTEMS</div>
+                    <ul id="active-agents-list" class="agents-list">
+                        <li data-agent="planner"><span class="status-dot online"></span> PLANNER</li>
+                        <li data-agent="researcher"><span class="status-dot"></span> RESEARCHER</li>
+                        <li data-agent="coder"><span class="status-dot"></span> CODER</li>
+                        <li data-agent="observer"><span class="status-dot online"></span> OBSERVER</li>
+                        <li data-agent="gesture"><span id="gesture-dot" class="status-dot"></span> GESTURE</li>
+                        <li data-agent="safety"><span class="status-dot online"></span> SAFETY</li>
+                    </ul>
+                </div>
+
+                <div class="glass-panel main-log">
+
+                    <div class="panel-header-sub">SYSTEM_TRANSCRIPT</div>
+
+                    <!-- 🧠 THINKING -->
+                    <div id="thinking-indicator" class="thinking hidden">
+                        JARVIS is thinking...
+                    </div>
+
+                    <div id="transcript" class="transcript-feed">
+                        <p class="system-msg">JARVIS online.</p>
+                    </div>
+
+                    <!-- INPUT -->
+                    <div class="input-area">
+                        <div class="input-wrapper">
+                            <input id="user-input" placeholder="> Awaiting command..." autocomplete="off">
+                            <button id="send-btn">EXECUTE</button>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+        </main>
+
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>

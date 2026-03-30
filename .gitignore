@@ -1,0 +1,10 @@
+.env
+memory.json
+conversation_log.json
+model/
+__pycache__/
+*.mp3
+*.log
+venv/
+.vscode/
+node_modules/

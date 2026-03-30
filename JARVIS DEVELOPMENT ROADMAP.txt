@@ -1,0 +1,368 @@
+JARVIS DEVELOPMENT ROADMAP
+
+Version 1.0
+Owner: Rishaad Fernandes
+Goal: Create a fully autonomous AI assistant with complete PC control, memory, and self-learning capabilities.
+
+PHASE 1 — SECURITY FIXES (URGENT)
+1.1 Regenerate API Key
+
+Problem:
+The Gemini API key is currently exposed.
+
+Action:
+
+Go to Google AI Studio
+
+Regenerate a new API key
+
+Replace the key in .env
+
+Goal:
+Prevent API abuse.
+
+1.2 Add .gitignore
+
+Prevent sensitive files from being uploaded.
+
+Add:
+
+.env
+memory.json
+model/
+__pycache__/
+PHASE 2 — CORE SPEED IMPROVEMENTS
+
+Problem:
+JARVIS sometimes responds slowly.
+
+Cause
+
+Current pipeline:
+
+Speech
+↓
+Vosk
+↓
+Gemini API
+↓
+Tool execution
+↓
+Speech
+Improvements
+2.1 Add command shortcuts
+
+Certain commands should bypass Gemini.
+
+Example:
+
+timer
+open chrome
+shutdown
+volume
+
+Implementation:
+
+if user_input.startswith("open"):
+    run_skill("open_app")
+
+Result:
+Instant response.
+
+2.2 Add asynchronous execution
+
+Some skills should run in background.
+
+Examples:
+
+web search
+
+downloads
+
+timers
+
+Use:
+
+ThreadPoolExecutor
+PHASE 3 — FULL PC CONTROL
+
+Goal: Give JARVIS complete control over the system.
+
+Create new skills:
+
+3.1 open_app skill
+
+Purpose:
+Launch applications.
+
+Example commands:
+
+open chrome
+open vscode
+open spotify
+
+Tools:
+
+subprocess
+os.system
+3.2 keyboard_control skill
+
+Use:
+
+pyautogui
+
+Capabilities:
+
+press keys
+type text
+shortcuts
+
+Example:
+
+ctrl + c
+ctrl + v
+alt + tab
+3.3 mouse_control skill
+
+Capabilities:
+
+move mouse
+click
+drag
+scroll
+
+Tools:
+
+pyautogui
+3.4 screen_capture skill
+
+Take screenshots.
+
+Use:
+
+pyautogui.screenshot()
+
+Later we can add vision models.
+
+3.5 shell_execution skill
+
+VERY IMPORTANT.
+
+Allows JARVIS to run system commands.
+
+Example:
+
+install software
+run scripts
+open apps
+modify files
+
+Implementation:
+
+subprocess.run()
+PHASE 4 — MEMORY SYSTEM V2
+
+Current memory system only writes facts.
+
+We must add recall ability.
+
+4.1 create recall_memory skill
+
+Allows JARVIS to read stored facts.
+
+Example:
+
+what is my favorite editor
+
+Reads from:
+
+memory.json
+4.2 semantic memory search
+
+Instead of key-value only.
+
+Future upgrade:
+
+vector memory
+
+Technologies:
+
+FAISS
+ChromaDB
+4.3 conversation memory
+
+Store recent conversations.
+
+Example:
+
+conversation_log.json
+
+This improves reasoning.
+
+PHASE 5 — SELF LEARNING SYSTEM
+
+Goal:
+Allow JARVIS to create new skills automatically.
+
+5.1 Skill synthesis pipeline
+
+Instead of:
+
+Gemini → create_skill
+
+Add pipeline:
+
+User request
+↓
+Gemini writes plan
+↓
+Gemini writes code
+↓
+code validator
+↓
+save skill
+5.2 skill auto testing
+
+When a new skill is created:
+
+test run
+check errors
+log results
+PHASE 6 — COMPUTER AUTOMATION
+
+Add skills for daily tasks.
+
+6.1 send_whatsapp_message
+
+Automation options:
+
+WhatsApp Web automation
+pyautogui
+6.2 email_sender
+
+Use:
+
+SMTP
+
+Commands:
+
+send email to X
+6.3 file_management
+
+Capabilities:
+
+create files
+delete files
+move files
+rename files
+PHASE 7 — AUTONOMOUS AGENT MODE
+
+Goal: JARVIS acts without commands.
+
+7.1 scheduler system
+
+Add background tasks.
+
+Examples:
+
+daily reminders
+system checks
+updates
+7.2 filesystem watcher
+
+Use:
+
+watchdog
+
+JARVIS can react when:
+
+files change
+downloads finish
+7.3 system monitor
+
+Monitor:
+
+CPU
+RAM
+battery
+network
+
+JARVIS can warn you.
+
+PHASE 8 — INTELLIGENCE UPGRADE
+8.1 better reasoning model
+
+Currently using:
+
+gemini-3.1-flash-lite-preview
+
+Future options:
+
+Gemini 2.5 Pro
+Claude
+local LLM
+8.2 multi-agent architecture
+
+Separate agents:
+
+planner
+executor
+researcher
+coder
+
+This makes JARVIS much smarter.
+
+PHASE 9 — VISION SYSTEM
+
+Future upgrade.
+
+Allow JARVIS to see screen.
+
+Skills:
+
+screen analysis
+object detection
+OCR
+
+Libraries:
+
+opencv
+pytesseract
+PHASE 10 — PERFORMANCE OPTIMIZATION
+10.1 reduce API calls
+
+Cache results.
+
+10.2 faster speech
+
+Options:
+
+local TTS
+
+Examples:
+
+Piper
+Coqui
+
+FINAL GOAL
+
+Create a system capable of:
+
+voice interaction
+complete PC control
+memory
+self-learning
+skill creation
+task automation
+autonomous behavior
+
+Essentially a real JARVIS assistant.
+
+FUTURE IDEAS
+
+Possible upgrades:
+
+mobile companion app
+cloud memory sync
+smart home control
+3D holographic UI

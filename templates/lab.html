@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS // HOLOGRAPHIC_LAB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='lab.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body class="stark-theme lab-mode">
+    <div class="hud-overlay">
+        <header class="lab-header">
+            <div class="glitch-text" data-text="HOLOGRAPHIC_LAB_V4.2">HOLOGRAPHIC_LAB_V4.2</div>
+            <div class="system-path">PATH_DATA: {{ os.getcwd() if os else 'E:/Projects/JARVIS' }}</div>
+        </header>
+
+        <main class="lab-container">
+            <!-- 🌐 3D TOPOLOGY CANVAS -->
+            <div id="hologram-viewport" class="glass-panel hologram-viewport">
+                <div class="viewport-header">DIGITAL_TWIN_TOPOLOGY</div>
+                <div id="canvas-container"></div>
+            </div>
+
+            <!-- 🤖 SWARM MONITOR -->
+            <aside class="swarm-monitor">
+                <div class="glass-card agent-log" data-agent="researcher">
+                    <div class="card-header">RESEARCHER_SWARM</div>
+                    <div id="researcher-log" class="log-stream">Initializing...</div>
+                </div>
+                <div class="glass-card agent-log" data-agent="coder">
+                    <div class="card-header">CODER_SWARM</div>
+                    <div id="coder-log" class="log-stream">Awaiting task...</div>
+                </div>
+                <div class="glass-card agent-log" data-agent="sentinel">
+                    <div class="card-header">SENTINEL_WATCHDOG</div>
+                    <div id="sentinel-log" class="log-stream">Monitoring...</div>
+                </div>
+            </aside>
+        </main>
+
+        <footer class="lab-footer">
+            <div class="stat-group">
+                <span class="label">NODES_INDEXED:</span>
+                <span id="node-count" class="value">0</span>
+            </div>
+            <div class="stat-group">
+                <span class="label">ACTIVE_THREADS:</span>
+                <span id="thread-count" class="value">4</span>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-btn">RETURN_TO_HUD</a>
+            </div>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', filename='lab.js') }}"></script>
+</body>
+</html>

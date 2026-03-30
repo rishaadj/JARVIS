@@ -1,0 +1,104 @@
+/* 🧪 HOLOGRAPHIC LAB STYLES */
+
+.lab-mode {
+    background: radial-gradient(circle at 50% 50%, #0a111a, #05080a);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.lab-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--accent-blue);
+    padding-bottom: 10px;
+}
+
+.lab-container {
+    display: flex;
+    flex: 1;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.hologram-viewport {
+    flex: 2;
+    background: rgba(0, 0, 0, 0.4);
+    box-shadow: inset 0 0 100px rgba(0, 243, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+#canvas-container {
+    width: 100%;
+    height: 100%;
+}
+
+.swarm-monitor {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.agent-log {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+}
+
+.log-stream {
+    flex: 1;
+    padding: 10px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    line-height: 1.4;
+    overflow-y: auto;
+    border-top: 1px solid var(--glass-border);
+}
+
+.lab-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 0;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.stat-group {
+    display: flex;
+    gap: 10px;
+}
+
+.value {
+    color: var(--accent-blue);
+    font-weight: 700;
+}
+
+.nav-btn {
+    background: transparent;
+    border: 1px solid var(--accent-blue);
+    color: var(--accent-blue);
+    padding: 5px 15px;
+    text-decoration: none;
+    font-weight: 700;
+    transition: all 0.3s;
+}
+
+.nav-btn:hover {
+    background: var(--accent-blue);
+    color: #000;
+}
+
+/* 🎥 THREE.JS CANVAS HUD OVERLAY */
+.viewport-header {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-family: var(--font-header);
+    color: var(--accent-blue);
+    letter-spacing: 2px;
+}
