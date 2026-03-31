@@ -1,108 +1,159 @@
-# 🤖 JARVIS
+# 🤖 JARVIS — Autonomous Multi-Agent AI System
 
-A modular AI assistant inspired by Iron Man’s JARVIS, built in Python.  
-Designed to handle voice commands, system automation, and scalable AI features.
+![Status](https://img.shields.io/badge/status-active-success)
+![Python](https://img.shields.io/badge/python-3.10+-blue)
+![Architecture](https://img.shields.io/badge/architecture-multi--agent-purple)
+![License](https://img.shields.io/badge/license-MIT-green)
 
----
-
-## 🚀 Features
-
-- 🎤 Voice Command Recognition  
-- ⚙️ System Automation (open apps, control system tasks)  
-- 🧠 Modular Architecture (easy to expand)  
-- 🔌 Extensible Design for:
-  - Memory systems  
-  - Gesture control  
-  - AI integrations (Gemini, etc.)  
-- 🧩 Protocol System (e.g. "Initiate House Party Protocol")
+> A Stark-inspired AI system built for autonomy, control, and evolution.
 
 ---
 
-## 🧠 Project Vision
+## 🧠 Overview
 
-The goal of JARVIS is to evolve into a **fully autonomous AI assistant** capable of:
+JARVIS is a **multi-agent autonomous AI system** designed to:
+- Execute complex tasks
+- Control your system
+- Learn and evolve by generating new capabilities
 
-- Natural conversation  
-- Context awareness  
-- Task automation  
-- Multi-module coordination  
-
----
-
-## 📁 Project Structure (example)
-
-
-JARVIS/
-│
-├── main.py # Entry point
-├── protocols.py # Protocol system (House Party, Shutdown, etc.)
-├── voice/ # Voice recognition & TTS
-├── automation/ # System control modules
-├── utils/ # Helper functions
-└── config/ # Settings & API keys
-
+This is not a chatbot — it’s a **coordinated AI architecture**.
 
 ---
 
-## ⚙️ Installation
+## 🧩 Architecture
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/rishaadj/JARVIS.git
-cd JARVIS
-2. Install dependencies
-pip install -r requirements.txt
-3. Run JARVIS
-python main.py
-🎤 Example Commands
-"Open Chrome"
-"What time is it?"
-"Initiate house party protocol"
-"Shutdown system"
-🔥 Protocol System
+```mermaid
+graph TD
+User --> Voice
+Voice --> Core
+Core --> Planner
+Core --> Executor
+Core --> Monitor
+Core --> Evaluator
+Executor --> Skills
+Core --> Memory
+Memory --> Core
+⚙️ Core Components
+🔹 Entry Layer
+main.py
+Initializes:
+Voice system (Vosk)
+Flask + SocketIO server
+Autonomous core
+🧠 Autonomous Core
+autonomous_core.py
+Coordinates all agents
+Handles full task lifecycle
+🤖 Multi-Agent System
+Agent	Role
+Planner	Breaks tasks into steps
+Executor	Executes actions
+Monitor	Tracks system & execution
+Evaluator	Validates outcomes
+🧬 Self-Evolving System
+coder_agent.py
+skill_synthesis_engine.py
 
-JARVIS supports custom protocols, inspired by Iron Man.
+JARVIS can:
 
-Example:
-
+Generate new Python skills
+Test and integrate them
+Expand its own functionality
+🧠 Memory System
+semantic_memory.py → Long-term knowledge
+conversation_log.json → Context tracking
+topology_engine.py → 3D knowledge graph
+👁️ Sensory Systems
+🎤 Voice
+Vosk (offline speech recognition)
+Edge-TTS (neural voice output)
+👀 Vision (WIP)
+visual_observer.py
+gesture_engine.py
+🖥️ Interface
+HUD (index.html)
+Real-time dashboard
+Chat + telemetry
+Holographic Lab (lab.html)
+3D system visualization
+🛠️ Capabilities
+💻 PC Control
+Mouse / keyboard control
+App launching
+Shell execution
+🌐 Communication
+WhatsApp messaging
+Email sending
+⚙️ System
+Monitoring
+Scheduling
+File management
+🔍 Research
+Web search
+Screen analysis
+⚡ Protocol System
 "JARVIS, initiate house party protocol"
 
-This can trigger:
+Triggers:
 
-Multiple modules
-Automation sequences
+Multi-agent coordination
+Parallel execution
 System-wide actions
-🛠️ Tech Stack
-Python
-Speech Recognition
-Text-to-Speech (TTS)
-OS Automation Libraries
-AI APIs (planned: Gemini / LLM integration)
-🧪 Current Status
-
-🚧 In Development
-
-Core voice system: ✅
-Automation: ⚠️ Partial
-Memory system: ❌ Not implemented
-Protocol system: 🚀 In progress
+🚀 Installation
+git clone https://github.com/rishaadj/JARVIS.git
+cd JARVIS
+pip install -r requirements.txt
+python main.py
+📊 Project Status
+Feature	Status
+Multi-Agent System	✅ Complete
+Autonomous Core	✅ Complete
+Memory System	✅ Complete
+Neural Voice	✅ Complete
+Vision System	🚧 In Progress
 🔮 Roadmap
- Memory & context system
- Advanced NLP (LLM integration)
- GUI / HUD interface
- Gesture control
- Multi-device control
- Self-learning capabilities
-🤝 Contributing
+ Advanced reasoning (LLMs)
+ Full autonomy (self-triggered actions)
+ Cross-device control
+ Real-time learning
+ Advanced UI / holographic interface
+🧠 Philosophy
 
-Contributions are welcome.
-Feel free to fork, improve, and submit pull requests.
+JARVIS is built on:
 
+Modularity
+Autonomy
+Evolution
+Control
 ⚠️ Disclaimer
 
-This project is for educational and experimental purposes.
-Not affiliated with Marvel or Iron Man.
+Educational and experimental project.
+Not affiliated with Marvel.
 
 🧠 Final Note
 
 “Sometimes you gotta run before you can walk.” – Tony Stark
+
+
+---
+
+# 🔥 What makes this “top-tier”
+
+- ✅ Badges (makes repo look legit instantly)  
+- ✅ Table formatting (clean + readable)  
+- ✅ Architecture diagram (VERY important for your project)  
+- ✅ No fluff — everything maps to real system  
+- ✅ Looks like a **serious engineering project**, not a hobby  
+
+---
+
+# 🚀 Next level (if you want)
+
+I can upgrade this even more with:
+- 🔥 **system diagrams (real visuals, not just text)**  
+- 🎥 demo section (huge impact)  
+- 📸 screenshots of your HUD / lab  
+- 🧠 architecture deep-dive section  
+
+Just say:
+**“add diagrams + visuals”**
