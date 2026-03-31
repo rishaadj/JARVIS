@@ -11,12 +11,13 @@
 
 ## 🧠 Overview
 
-JARVIS is a **multi-agent autonomous AI system** designed to:
-- Execute complex tasks
-- Control your system
-- Learn and evolve by generating new capabilities
+JARVIS is a multi-agent autonomous AI system designed to:
 
-This is not a chatbot — it’s a **coordinated AI architecture**.
+- Execute complex tasks  
+- Control your system  
+- Learn and evolve by generating new capabilities  
+
+This is not a chatbot — it’s a coordinated AI architecture.
 
 ---
 
@@ -24,15 +25,15 @@ This is not a chatbot — it’s a **coordinated AI architecture**.
 
 ```mermaid
 graph TD
-User --> Voice
-Voice --> Core
-Core --> Planner
-Core --> Executor
-Core --> Monitor
-Core --> Evaluator
-Executor --> Skills
-Core --> Memory
-Memory --> Core
+    User --> Voice
+    Voice --> Core
+    Core --> Planner
+    Core --> Executor
+    Core --> Monitor
+    Core --> Evaluator
+    Executor --> Skills
+    Core --> Memory
+    Memory --> Core
 ⚙️ Core Components
 🔹 Entry Layer
 main.py
@@ -113,10 +114,10 @@ Neural Voice	✅ Complete
 Vision System	🚧 In Progress
 🔮 Roadmap
  Advanced reasoning (LLMs)
- Full autonomy (self-triggered actions)
+ Full autonomy
  Cross-device control
  Real-time learning
- Advanced UI / holographic interface
+ Advanced UI
 🧠 Philosophy
 
 JARVIS is built on:
@@ -133,27 +134,3 @@ Not affiliated with Marvel.
 🧠 Final Note
 
 “Sometimes you gotta run before you can walk.” – Tony Stark
-
-
----
-
-# 🔥 What makes this “top-tier”
-
-- ✅ Badges (makes repo look legit instantly)  
-- ✅ Table formatting (clean + readable)  
-- ✅ Architecture diagram (VERY important for your project)  
-- ✅ No fluff — everything maps to real system  
-- ✅ Looks like a **serious engineering project**, not a hobby  
-
----
-
-# 🚀 Next level (if you want)
-
-I can upgrade this even more with:
-- 🔥 **system diagrams (real visuals, not just text)**  
-- 🎥 demo section (huge impact)  
-- 📸 screenshots of your HUD / lab  
-- 🧠 architecture deep-dive section  
-
-Just say:
-**“add diagrams + visuals”**
