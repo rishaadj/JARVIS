@@ -34,6 +34,7 @@ graph TD
     Executor --> Skills
     Core --> Memory
     Memory --> Core
+
 ⚙️ Core Components
 🔹 Entry Layer
 main.py
