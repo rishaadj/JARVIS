@@ -16,6 +16,7 @@ from google import genai
 
 # Import the core and skills
 from autonomous_core import start_autonomous_core
+from utils.audio_manager import audio_manager
 
 # --- CONFIGURATION ---
 load_dotenv()
@@ -126,6 +127,15 @@ def listen_loop():
                             channels=1, callback=audio_callback):
         while True:
             data = audio_queue.get()
+            
+            # Check for partial results to trigger "Stop on Speech" faster
+            if audio_manager.is_speaking:
+                if rec.PartialResult():
+                    partial = json.loads(rec.PartialResult())
+                    if partial.get("partial", "").strip():
+                        print("[SYSTEM] User interruption detected. Stopping JARVIS.")
+                        audio_manager.stop_speaking()
+
             if rec.AcceptWaveform(data):
                 result = json.loads(rec.Result())
                 user_text = result.get("text", "")

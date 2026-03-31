@@ -187,6 +187,35 @@ socket.on('system_status', (data) => {
     }
 });
 
+// 🎙️ Milestone 8: VOICE WAVEFORM HUD
+socket.on('voice_level', (data) => {
+    const level = data.level || 0; // 0 to 100
+    const reactor = document.querySelector('.arc-reactor');
+    const core = document.querySelector('.core-circle');
+    const glow = document.getElementById('core-glow');
+    const rings = document.querySelectorAll('.ring');
+
+    if (reactor && core) {
+        // Scale core based on level
+        const scale = 1 + (level / 150); 
+        core.style.transform = `scale(${scale})`;
+        core.style.transition = 'transform 0.05s ease-out';
+
+        // Intensify glow
+        if (glow) {
+            glow.style.boxShadow = `0 0 ${20 + (level / 2)}px ${10 + (level / 4)}px var(--accent-cyan)`;
+            glow.style.opacity = 0.5 + (level / 200);
+        }
+
+        // Pulse rings
+        rings.forEach((ring, i) => {
+            const ringScale = 1 + (level / (200 + i * 50));
+            ring.style.transform = `scale(${ringScale})`;
+            ring.style.transition = 'transform 0.1s ease-out';
+        });
+    }
+});
+
 // 🛡️ Milestone 4: AUTH & REMOTE
 let currentPin = "";
 const authOverlay = document.getElementById('auth-overlay');
