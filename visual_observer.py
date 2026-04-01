@@ -6,7 +6,7 @@ from PIL import Image
 from datetime import datetime
 
 class VisualObserver:
-    def __init__(self, chat_obj, socketio_obj=None, scan_interval=300):
+    def __init__(self, chat_obj, socketio_obj=None, scan_interval=600):
         self.chat = chat_obj
         self.socketio = socketio_obj
         self.scan_interval = scan_interval
@@ -65,8 +65,8 @@ class VisualObserver:
                 
             except Exception as e:
                 # 🛡️ 429 Rate Limit Mitigation
-                if "429" in str(e):
-                    print(f"[VISUAL_OBSERVER] Quota Exhausted (429). Sleeping for 10 minutes...")
+                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                    print(f"[VISUAL_OBSERVER] Brain Overloaded (429). Eye rest for 10 minutes...")
                     time.sleep(600) # Sleep longer if 429 occurs
                 else:
                     print(f"[VISUAL_OBSERVER] Error: {e}")

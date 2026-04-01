@@ -63,7 +63,8 @@ class AutonomousCore:
         
         # ⏱️ Quota Management (Milestone 7 Throttle)
         self.last_goal_check = 0
-        self.goal_check_interval = 300 # 5 minutes between autonomous goal checks
+        self.goal_check_interval = 600 # 10 minutes between autonomous goal checks
+        self.cooldown_until = 0 # ⏱️ Rate-limit suppression
 
         # 🧩 State & Context Management
         self.task_queue: list[str] = []
@@ -186,6 +187,9 @@ class AutonomousCore:
             return {"type": "execute_task", "data": self.task_queue.pop(0)}
 
         if not self.active_goal and (time.time() - self.last_goal_check > self.goal_check_interval):
+            if time.time() < self.cooldown_until:
+                return {"type": "idle", "data": None}
+            
             self.last_goal_check = time.time()
             memory_data = self.memory.load_memory()
             goal = self.goal_agent.generate_goal(status, memory_data)
@@ -366,6 +370,9 @@ class AutonomousCore:
                 self._post_action_evaluate(action_text, str(result))
                     
             except Exception as e:
+                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                    self.log("Brain Overloaded (429). Cooling down for 5 minutes.", "brain")
+                    self.cooldown_until = time.time() + 300
                 self.log(f"Reasoning Error: {e}", "error")
             finally:
                 self._set_busy(False)

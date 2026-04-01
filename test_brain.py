@@ -1,24 +1,21 @@
 import os
+from google import genai
 from dotenv import load_dotenv
-import google.generativeai as genai
 
 load_dotenv()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash").strip()
 
+if not GEMINI_API_KEY:
+    print("API Key not found in .env")
+    exit(1)
+
+client = genai.Client(api_key=GEMINI_API_KEY)
 try:
-    print("Initiating JARVIS Core...")
-    
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is not set in .env")
-    genai.configure(api_key=api_key)
-
-    model = genai.GenerativeModel("gemini-3.1-flash-lite-preview")
-    response = model.generate_content("System check. Reply with: Online, Sir.")
-    
-    print("-" * 30)
-    print(f"JARVIS: {response.text}")
-    print("-" * 30)
-    print("SUCCESS: Connection established.")
-
+    response = client.models.generate_content(
+        model=GEMINI_MODEL,
+        contents="Hello, identify yourself."
+    )
+    print("Response:", response.text)
 except Exception as e:
-    print(f"Connection Failed: {e}")
+    print("Error:", e)

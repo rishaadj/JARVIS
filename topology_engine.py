@@ -8,42 +8,82 @@ class TopologyEngine:
         self.ignored_dirs = {'.git', '__pycache__', 'node_modules', 'model', 'screenshots'}
         self.ignored_files = {'.env', 'audit.log', 'semantic_index.json', 'jarvis_memory.json'}
 
+    def _extract_imports(self, file_path):
+        """Extracts local imports from a Python file."""
+        import re
+        imports = []
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+                # matches: from x.y import z, import x.y
+                patterns = [
+                    r"^from\s+([a-zA-Z0-9_\.]+)\s+import",
+                    r"^import\s+([a-zA-Z0-9_\.,\s]+)$"
+                ]
+                for p in patterns:
+                    matches = re.findall(p, content, re.MULTILINE)
+                    for m in matches:
+                        # Clean up multiple imports like 'import os, sys'
+                        parts = [x.strip().split('.')[0] for x in m.split(',')]
+                        imports.extend(parts)
+        except:
+            pass
+        return list(set(imports))
+
     def get_topology(self):
         nodes = []
         links = []
         
         # 📂 File System Nodes
-        file_map = {} # path -> id
+        file_map = {} # rel_path -> id
+        name_map = {} # module_name -> id
         counter = 0
         
+        file_list = []
         for root, dirs, files in os.walk(self.root_dir):
-            # Prune ignored directories
             dirs[:] = [d for d in dirs if d not in self.ignored_dirs]
-            
             for file in files:
                 if file in self.ignored_files or file.endswith(('.pyc', '.tmp', '.log')):
                     continue
-                    
                 rel_path = os.path.relpath(os.path.join(root, file), self.root_dir)
-                file_id = f"file_{counter}"
-                file_map[rel_path] = file_id
-                
-                nodes.append({
-                    "id": file_id,
-                    "name": file,
-                    "type": "file",
-                    "path": rel_path,
-                    "size": os.path.getsize(os.path.join(root, file))
-                })
-                counter += 1
+                file_list.append((rel_path, file, os.path.join(root, file)))
 
-        # 🧠 Semantic Memory Nodes (Simplified)
+        for rel_path, file_name, full_path in file_list:
+            file_id = f"file_{counter}"
+            file_map[rel_path] = file_id
+            
+            # Module name for matching imports (e.g. 'utils/audio_manager.py' -> 'audio_manager')
+            module_name = os.path.splitext(file_name)[0]
+            name_map[module_name] = file_id
+            
+            nodes.append({
+                "id": file_id,
+                "name": file_name,
+                "type": "file",
+                "path": rel_path,
+                "size": os.path.getsize(full_path)
+            })
+            counter += 1
+
+        # ⛓️ Dependency Links (Import Tracking)
+        for rel_path, file_name, full_path in file_list:
+            if not file_name.endswith('.py'):
+                continue
+            source_id = file_map[rel_path]
+            found_imports = self._extract_imports(full_path)
+            for imp in found_imports:
+                if imp in name_map:
+                    target_id = name_map[imp]
+                    if source_id != target_id:
+                        links.append({"source": source_id, "target": target_id, "type": "import"})
+
+        # 🧠 Semantic Memory Nodes
         memory_path = os.path.join(self.root_dir, "semantic_index.json")
         if os.path.exists(memory_path):
             try:
                 with open(memory_path, "r") as f:
                     memories = json.load(f)
-                    for i, mem in enumerate(memories[:10]): # Limit to latest 10 for viz clarity
+                    for i, mem in enumerate(memories[:12]):
                         mem_id = f"mem_{i}"
                         nodes.append({
                             "id": mem_id,
@@ -51,22 +91,25 @@ class TopologyEngine:
                             "type": "memory",
                             "timestamp": mem['metadata'].get('timestamp')
                         })
-                        # Link memories to files they might mention (crude heuristic)
                         for rel_path, f_id in file_map.items():
-                            if file_id.split('.')[0] in mem['metadata'].get('text', ''):
-                                links.append({"source": mem_id, "target": f_id, "type": "mention"})
+                            if os.path.splitext(os.path.basename(rel_path))[0] in mem['metadata'].get('text', ''):
+                                links.append({"source": mem_id, "target": f_id, "type": "context"})
             except:
                 pass
 
-        # 🔗 Folder Structure Links
-        # (This creates a tree-like backbone for the graph)
-        # Note: For a "Twin" look, we just link everything to common parent or project root
+        # 🔗 Root Backbone
         project_node = {"id": "root", "name": "JARVIS_CORE", "type": "project"}
-        nodes.append(project_node)
+        nodes.insert(0, project_node)
         
+        # Only link files to root if they have no other incoming/outgoing connections (clutter reduction)
+        connected_ids = set()
+        for l in links:
+            connected_ids.add(l['source'])
+            connected_ids.add(l['target'])
+
         for n in nodes:
-            if n['id'] != 'root':
-                links.append({"source": "root", "target": n['id'], "type": "contains"})
+            if n['id'] != 'root' and n['id'] not in connected_ids:
+                links.append({"source": "root", "target": n['id'], "type": "structure"})
 
         return {"nodes": nodes, "links": links}
 

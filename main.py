@@ -17,6 +17,7 @@ from google import genai
 # Import the core and skills
 from autonomous_core import start_autonomous_core
 from utils.audio_manager import audio_manager
+from topology_engine import TopologyEngine
 
 # --- CONFIGURATION ---
 load_dotenv()
@@ -98,7 +99,12 @@ def index():
 
 @app.route('/lab')
 def lab():
-    return render_template('lab.html')
+    return render_template('lab.html', os=os)
+
+@app.route('/api/topology')
+def api_topology():
+    engine = TopologyEngine(os.getcwd())
+    return engine.get_topology()
 
 @socketio.on('ui_command')
 def on_ui_command(data):
