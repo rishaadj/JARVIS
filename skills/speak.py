@@ -3,9 +3,12 @@ import edge_tts
 import os
 import time
 import threading
-import pyttsx3
 from speech_formatter import format_for_speech
 from utils.audio_manager import audio_manager
+
+# --- Global Lock for Thread-Safe Speech (pyttsx3) ---
+speech_lock = threading.Lock()
+
 
 # --- Dependency Check & Optional Imports ---
 HAS_PYGAME = False
@@ -78,17 +81,16 @@ async def generate_and_play(text, socketio=None, voice="en-GB-RyanNeural"):
 
     # --- STRATEGY B: Offline Robust Fallback (pyttsx3) ---
     try:
-        audio_manager.start_speaking()
-        engine = pyttsx3.init()
-        # Slightly Stark-like voice profile (clear, measured)
-        engine.setProperty('rate', 175)
-        engine.setProperty('volume', 1.0)
-        
-        # We run in a thread to keep the HUD/SocketIO loop alive
         def run_offline():
-            engine.say(clean_text)
-            engine.runAndWait()
-            audio_manager.stop_speaking()
+            with speech_lock:
+                audio_manager.start_speaking()
+                engine = pyttsx3.init()
+                # Slightly Stark-like voice profile (clear, measured)
+                engine.setProperty('rate', 175)
+                engine.setProperty('volume', 1.0)
+                engine.say(clean_text)
+                engine.runAndWait()
+                audio_manager.stop_speaking()
 
         threading.Thread(target=run_offline, daemon=True).start()
     except Exception as e:

@@ -117,17 +117,17 @@ ACTION: <skill_name>: <json_params>
 The params must be a valid JSON object.
 
 Supported skills:
-- open_app: {"text": "<app name>"}
-- vision: {}
-- speak: {"text": "<what to say>"}
-- web_search: {"query": "<search query>"}
-- research: {"topic": "<topic>"}
-- synthesize_skill: {"skill_name": "<name>", "description": "<desc>", "requirements": "<reqs>"}
-- shell_execution: {"command": "<shell command>"}
-- list_files: {"path": "<path>"}
-- screen_capture: {}
-- learn: {"key":"<key>","fact":"<fact>"}
-- recall_memory: {"key":"<key>"}
+- open_app: {{"text": "<app name>"}}
+- vision: {{}}
+- speak: {{"text": "<what to say>"}}
+- web_search: {{"query": "<search query>"}}
+- research: {{"topic": "<topic>"}}
+- synthesize_skill: {{"skill_name": "<name>", "description": "<desc>", "requirements": "<reqs>"}}
+- shell_execution: {{"command": "<shell command>"}}
+- list_files: {{"path": "<path>"}}
+- screen_capture: {{}}
+- learn: {{"key":"<key>","fact":"<fact>"}}
+- recall_memory: {{"key":"<key>"}}
 """
 
     def run_skill(self, skill_name, params):

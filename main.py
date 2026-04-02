@@ -60,10 +60,10 @@ running = True
 
 # --- VOSK SETUP ---
 def load_vosk_model():
-    # Priority: High-Accuracy EN-IN > Small EN-IN > Generic Model
+    # Priority: Small EN-IN (Fast) > Large EN-IN > Generic Model
     model_options = [
-        "vosk-model-en-in-0.5",
         "vosk-model-small-en-in-0.4",
+        "vosk-model-en-in-0.5",
         "model"
     ]
     
@@ -184,7 +184,8 @@ def system_log_loop():
     while running:
         status = system_monitor()
         socketio.emit('system_status', {'status': status})
-        time.sleep(5)
+        time.sleep(10)
+
 
 # --- MAIN ENTRY ---
 if __name__ == "__main__":

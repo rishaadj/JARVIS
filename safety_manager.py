@@ -52,14 +52,20 @@ class SafetyManager:
         if status == "DENIED":
             self.latest_violation = f"{agent_role} attempted {skill_name} but was DENIED in {self.env} environment."
         
+        # Clean params to remove non-serializable SocketIO object
+        clean_params = dict(params or {})
+        if "_socketio" in clean_params:
+            del clean_params["_socketio"]
+
         log_entry = {
             "agent": agent_role,
             "skill": skill_name,
-            "params": params,
+            "params": clean_params,
             "status": status,
             "metadata": metadata,
             "env": self.env
         }
+
         self.logger.info(json.dumps(log_entry))
 
     def get_latest_violation(self):
