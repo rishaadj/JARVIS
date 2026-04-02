@@ -126,6 +126,11 @@ class AutonomousCore:
         if self.socketio:
             self.socketio.emit("state_change", "processing" if busy else "idle")
 
+    def _set_action(self) -> None:
+        """Emit 'action' state to HUD when executing a skill."""
+        if self.socketio:
+            self.socketio.emit("state_change", "action")
+
     def _emit_jarvis_message(self, text: str) -> None:
         safe_text = str(text).strip()
         if self.socketio and safe_text:
@@ -242,6 +247,7 @@ class AutonomousCore:
                     action_text = pc.get("action_text", f"{skill_name}: {params}")
                     self._emit_jarvis_message(f"Confirmed. Executing: {action_text}")
                     self._set_busy(True)
+                    self._set_action()
                     result = self.executor_agent.execute_skill(skill_name, self._inject_socketio(params))
                     if result is not None:
                         self._emit_jarvis_message(str(result))
@@ -284,8 +290,10 @@ class AutonomousCore:
 
             self._set_busy(True)
             
-            # Strict Explicit Vision Context
-            v_ctx = "Visual context is intentionally blank to save quota. ONLY use the 'vision' skill if the user EXPLICITLY asks you to look at their screen or analyze an image."
+            # Dynamic Vision Context (Use last scan if recent, otherwise save quota)
+            v_ctx = self.visual_observer.get_context()
+            if "No visual data" in v_ctx:
+                v_ctx = "Visual context is currently empty. ONLY use the 'vision' skill if the user explicitly asks you to look at their screen or analyze something."
                 
             context_snapshot = "\n".join(list(self.context_buffer))
             
@@ -357,6 +365,7 @@ class AutonomousCore:
 
                 if skill_name == "vision":
                     # Vision logic remains similar
+                    self._set_action()
                     result = self.executor_agent.execute_skill("vision", self._inject_socketio(params))
                     if isinstance(result, str) and "SCREENSHOT_SAVED" in result:
                         img_path = os.path.abspath(result.split(":", 1)[-1].strip())
@@ -370,6 +379,7 @@ class AutonomousCore:
                     self._emit_jarvis_message(str(result))
                     return
 
+                self._set_action()
                 result = self.executor_agent.execute_skill(skill_name, self._inject_socketio(params))
                 if result is not None:
                     self._emit_jarvis_message(str(result))

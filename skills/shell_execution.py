@@ -11,6 +11,12 @@ def execute(params):
         
         output = result.stdout.strip()
         error = result.stderr.strip()
+
+        # Truncate long outputs
+        if len(output) > 1000:
+            output = output[:1000] + "\n...(truncated for brevity)..."
+        if len(error) > 1000:
+            error = error[:1000] + "\n...(truncated for brevity)..."
         
         if result.returncode == 0:
             if not output:

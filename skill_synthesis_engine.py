@@ -32,13 +32,27 @@ class SkillSynthesisEngine:
         # Try to run it with empty/default params or sample params.
         test_result = self.executor.execute_skill(f"test_{skill_name}", {})
         
-        # 5. Review Test Result
+        # 5. Review & Self-Correction Loop
+        retries = 2
+        while retries > 0:
+            if "Error" not in f"{test_result}":
+                break
+                
+            print(f"[SYNTHESIS ENGINE] Test Failed: {test_result}. Attempting self-correction ({retries} left).")
+            # Feed back the error to the coder
+            code = self.coder.generate_skill_code(skill_name, description, requirements, previous_error=str(test_result))
+            
+            if not code.startswith("# Coder Error:"):
+                with open(test_file, "w") as f:
+                    f.write(code)
+                # Re-test
+                test_result = self.executor.execute_skill(f"test_{skill_name}", {})
+            
+            retries -= 1
+
         if "Error" in f"{test_result}":
-            print(f"[SYNTHESIS ENGINE] Test Failed: {test_result}. Attempting self-correction.")
-            # Self-Correction can be implemented here by calling CoderAgent again with error feedback.
-            # For now, let's just log failure.
             os.remove(test_file)
-            return f"Auto-test failed: {test_result}. Synthesis aborted."
+            return f"Synthesis failed after multiple attempts. Last error: {test_result}"
 
         # 6. Final Registration (Save to permanent file)
         final_file = os.path.join(self.skills_dir, f"{skill_name}.py")

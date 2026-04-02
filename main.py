@@ -54,8 +54,9 @@ else:
 # Audio Queue for Vosk
 audio_queue = queue.Queue()
 
-# Global Core Reference
+# Global State
 core = None
+running = True
 
 # --- VOSK SETUP ---
 try:
@@ -93,8 +94,8 @@ def system_monitor():
 # --- NETWORKING & UI ROUTES ---
 @app.route('/')
 def index():
-    from datetime import datetime, timezone
-    date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    from datetime import datetime
+    date_str = datetime.now().strftime("%d %b %Y")
     return render_template('index.html', date_str=date_str)
 
 @app.route('/lab')
@@ -127,29 +128,34 @@ def audio_callback(indata, frames, time_info, status):
     audio_queue.put(bytes(indata))
 
 def listen_loop():
-    """Main voice recognition loop using Vosk."""
+    """Main voice recognition loop using Vosk with optimized 'Stop on Speech'."""
     print("[SYSTEM] Voice Recognition Active...")
-    with sd.RawInputStream(samplerate=16000, blocksize=8000, dtype='int16',
-                            channels=1, callback=audio_callback):
-        while True:
-            data = audio_queue.get()
-            
-            # Check for partial results to trigger "Stop on Speech" faster
-            if audio_manager.is_speaking:
-                if rec.PartialResult():
-                    partial = json.loads(rec.PartialResult())
-                    if partial.get("partial", "").strip():
-                        print("[SYSTEM] User interruption detected. Stopping JARVIS.")
-                        audio_manager.stop_speaking()
+    try:
+        with sd.RawInputStream(samplerate=16000, blocksize=8000, dtype='int16',
+                                channels=1, callback=audio_callback):
+            while running:
+                try:
+                    data = audio_queue.get(timeout=0.1)
+                except queue.Empty:
+                    continue
+                
+                # Optimized "Stop on Speech"
+                if audio_manager.is_speaking:
+                    # Check partial results for ANY speech activity
+                    partial_str = rec.PartialResult()
+                    if partial_str:
+                        partial_data = json.loads(partial_str)
+                        if partial_data.get("partial", "").strip():
+                            print("[SYSTEM] User interruption detected. Stopping JARVIS.")
+                            audio_manager.stop_speaking()
 
-            if rec.AcceptWaveform(data):
-                result = json.loads(rec.Result())
-                user_text = result.get("text", "")
-                if user_text:
-                    process_intent(user_text)
-                    
-            # Yield CPU to prevent 100% Core Lock
-            time.sleep(0.01)
+                if rec.AcceptWaveform(data):
+                    result = json.loads(rec.Result())
+                    user_text = result.get("text", "")
+                    if user_text:
+                        process_intent(user_text)
+    except Exception as e:
+        print(f"[ERROR] listen_loop error: {e}")
 
 def process_intent(user_input: str) -> None:
     """Updates UI and hands the intent to the autonomous core."""
@@ -160,7 +166,7 @@ def process_intent(user_input: str) -> None:
 
 def system_log_loop():
     """Continuously sends system health updates to the UI."""
-    while True:
+    while running:
         status = system_monitor()
         socketio.emit('system_status', {'status': status})
         time.sleep(5)

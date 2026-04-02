@@ -4,165 +4,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS HUD</title>
+    <title>JARVIS — Stark Industries</title>
+    <meta name="description" content="JARVIS Autonomous AI Assistant — Heads-Up Display">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&family=JetBrains+Mono&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&family=JetBrains+Mono:wght@300;400;500&display=swap"
         rel="stylesheet">
 </head>
 
-<body class="stark-theme">
+<body>
+    <!-- Atmospheric Layers -->
     <div class="scanline"></div>
     <div class="vignette"></div>
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
 
     <div class="hud-container">
 
+        <!-- ===== HEADER ===== -->
         <header class="hud-header">
-            <div class="system-status">
-                <div class="status-box">
-                    <span class="label">CORE_STATUS</span>
-                    <span id="status-text" class="value">ACTIVE</span>
+            <div class="header-left">
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span id="status-text">ONLINE</span>
                 </div>
+                <span class="jarvis-title">JARVIS</span>
             </div>
 
-            <div class="logo-area">
-                <span class="stark-logo">JARVIS</span>
+            <div class="header-center">
+                <span id="neural-state" class="neural-state-label">NEURAL LINK ESTABLISHED</span>
             </div>
 
-            <div class="clock-area glass-card">
-                <div class="time-main">
-                    <span id="live-time">00:00:00</span>
-                    <span id="live-millis">.000</span>
+            <div class="header-right">
+                <div class="clock-display">
+                    <span id="live-time">00:00:00</span><span id="live-millis" class="clock-millis">.000</span>
                 </div>
-                <div class="time-sub">
-                    <div class="date-str">{{ date_str }}</div>
-                    <div class="timezone">UTC +05:30</div>
-                </div>
-                <div class="uptime-row">
-                    <span class="label">UPTIME:</span>
-                    <span id="uptime-val">00h 00m 00s</span>
+                <div class="header-meta">
+                    <span>{{ date_str }}</span> &middot;
+                    <span>UPTIME <span id="uptime-val">00:00:00</span></span>
                 </div>
             </div>
         </header>
 
+        <!-- ===== MAIN GRID ===== -->
         <main class="hud-main">
 
-            <!-- LEFT -->
+            <!-- LEFT SIDEBAR -->
             <section class="left-panels">
-                <!-- 👁️ VISUAL AWARENESS (NEW) -->
-                <div class="glass-card observer-panel">
-                    <div class="card-header">VISUAL_AWARENESS</div>
-                    <div class="observer-content">
-                        <div id="observer-scan-container" class="scan-container" style="border-bottom: 1px solid rgba(0, 243, 255, 0.2);">
-                            <div class="scanner"></div>
-                            <img id="last-scan-img" src="" alt="Awaiting Scan..." class="scan-img" style="width: 100%; object-fit: cover;">
-                        </div>
-                        <div id="observer-context" class="observer-text" style="padding: 10px; font-size: 0.8rem; font-family: 'Courier New', monospace; color: #a0ffff;">
-                            Initializing neural vision...
-                        </div>
-                    </div>
-                </div>
 
-                <div class="glass-card sys-vitals">
+                <!-- System Metrics -->
+                <div class="glass-card">
                     <div class="card-header">SYSTEM_METRICS</div>
-                    <div class="vitals-grid">
-                        <div class="vital-item">
-                            <span class="label">CPU</span>
-                            <div class="progress-bar">
-                                <div id="cpu-bar" class="fill"></div>
-                            </div>
+                    <div class="metrics-grid">
+                        <div class="metric-row">
+                            <div class="metric-label"><span>CPU</span><span id="cpu-val" class="metric-value">0%</span></div>
+                            <div class="metric-bar"><div id="cpu-bar" class="fill"></div></div>
                         </div>
-                        <div class="vital-item">
-                            <span class="label">MEMORY</span>
-                            <div class="progress-bar">
-                                <div id="mem-bar" class="fill"></div>
-                            </div>
+                        <div class="metric-row">
+                            <div class="metric-label"><span>MEMORY</span><span id="mem-val" class="metric-value">0%</span></div>
+                            <div class="metric-bar"><div id="mem-bar" class="fill"></div></div>
                         </div>
-                        <div class="vital-item">
-                            <span class="label">LATENCY</span>
-                            <span id="latency-val">0ms</span>
+                        <div class="metric-row">
+                            <div class="metric-label"><span>BATTERY</span><span id="batt-val" class="metric-value">--</span></div>
+                            <div class="metric-bar"><div id="batt-bar" class="fill battery"></div></div>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label"><span>LATENCY</span><span id="latency-val" class="metric-value">--</span></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 📁 FILE WATCHER (NEW BENTO ITEM) -->
-                <div class="glass-card file-watcher-panel">
-                    <div class="card-header">FILE_WATCHER</div>
-                    <ul class="skills-list" style="padding: 1rem;">
-                        <li style="font-family: 'Courier New', monospace;"><span class="dot online"></span> E:\Projects\JARVIS [MONITORING]</li>
-                        <li style="font-family: 'Courier New', monospace; opacity: 0.6;"><span class="dot online"></span> _index.html (Sync)</li>
-                        <li style="font-family: 'Courier New', monospace; opacity: 0.6;"><span class="dot online"></span> _style.css (Sync)</li>
-                    </ul>
-                </div>
-            </section>
-
-            <!-- CORE -->
-            <section class="center-panel" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2rem;">
-                
-                <!-- 🧠 NEURAL LINK (NEW BENTO ITEM) -->
-                <div class="glass-card neural-link" style="width: 100%; max-width: 380px;">
-                    <div class="card-header" style="text-align: center; background: rgba(0, 243, 255, 0.2);">NEURAL_LINK_STATUS</div>
-                    <div style="text-align:center; padding: 10px; font-family: 'Courier New', monospace; color: var(--accent-blue); letter-spacing: 4px; animation: pulse-glow 2s infinite;">
-                        ESTABLISHED
-                    </div>
-                </div>
-
-                <div class="arc-reactor">
-                    <svg viewBox="0 0 200 200" class="reactor-svg">
-                        <!-- Outer Ring -->
-                        <circle cx="100" cy="100" r="90" class="ring outer" />
-                        <circle cx="100" cy="100" r="90" class="ring outer-dash" stroke-dasharray="10, 20" />
-                        
-                        <!-- Middle Ring -->
-                        <circle cx="100" cy="100" r="70" class="ring middle" stroke-dasharray="5, 5" />
-                        
-                        <!-- Inner Ring -->
-                        <circle cx="100" cy="100" r="50" class="ring inner" />
-                        
-                        <!-- Core -->
-                        <circle cx="100" cy="100" r="30" class="core-circle" />
-                    </svg>
-                    <div id="core-glow" class="core-glow"></div>
-                </div>
-            </section>
-
-            <!-- RIGHT -->
-            <section class="transcript-section">
-                <!-- 🤖 ACTIVE SUBSYSTEMS (NEW) -->
-                <div class="glass-card agents-hud">
-                    <div class="card-header">ACTIVE_SUBSYSTEMS</div>
+                <!-- Active Subsystems -->
+                <div class="glass-card">
+                    <div class="card-header">SUBSYSTEMS</div>
                     <ul id="active-agents-list" class="agents-list">
-                        <li data-agent="planner"><span class="status-dot online"></span> PLANNER</li>
+                        <li data-agent="planner" class="active"><span class="status-dot online"></span> PLANNER</li>
                         <li data-agent="researcher"><span class="status-dot"></span> RESEARCHER</li>
                         <li data-agent="coder"><span class="status-dot"></span> CODER</li>
+                        <li data-agent="executor"><span class="status-dot online"></span> EXECUTOR</li>
                         <li data-agent="observer"><span class="status-dot online"></span> OBSERVER</li>
                         <li data-agent="gesture"><span id="gesture-dot" class="status-dot"></span> GESTURE</li>
                         <li data-agent="safety"><span class="status-dot online"></span> SAFETY</li>
                     </ul>
                 </div>
 
-                <div class="glass-panel main-log">
+                <!-- Visual Awareness -->
+                <div class="glass-card observer-panel">
+                    <div class="card-header">VISUAL_AWARENESS</div>
+                    <div class="scan-container">
+                        <div class="scanner"></div>
+                        <img id="last-scan-img" src="" alt="" class="scan-img">
+                    </div>
+                    <div id="observer-context" class="observer-text">
+                        Awaiting visual data...
+                    </div>
+                </div>
 
+                <!-- Live Data Stream -->
+                <div class="glass-card">
+                    <div class="card-header">DATA_STREAM</div>
+                    <div id="data-stream" class="data-stream">
+                        Initializing telemetry feed...
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- CENTER: NEURAL CORE -->
+            <section class="center-panel">
+                <div class="arc-reactor">
+                    <svg viewBox="0 0 200 200" class="reactor-svg">
+                        <!-- Data Ring (outermost, large) -->
+                        <circle cx="100" cy="100" r="96" class="ring data-ring" />
+
+                        <!-- Outer Rings -->
+                        <circle cx="100" cy="100" r="88" class="ring outer" />
+                        <circle cx="100" cy="100" r="88" class="ring outer-dash" stroke-dasharray="8, 16" />
+
+                        <!-- Middle Ring -->
+                        <circle cx="100" cy="100" r="68" class="ring middle" stroke-dasharray="3, 8" />
+
+                        <!-- Inner Ring -->
+                        <circle cx="100" cy="100" r="48" class="ring inner" stroke-dasharray="30, 8" />
+
+                        <!-- Hex Frame -->
+                        <path d="M100 78 L119 89 L119 111 L100 122 L81 111 L81 89 Z" class="hex-frame" />
+
+                        <!-- Core -->
+                        <circle cx="100" cy="100" r="28" class="core-circle" />
+
+                        <!-- Scanning Beam -->
+                        <line x1="100" y1="100" x2="100" y2="8" stroke="var(--state-accent)" stroke-width="0.5" opacity="0.3" class="scan-beam" />
+                    </svg>
+                    <div id="core-glow" class="core-glow"></div>
+                </div>
+
+                <div class="core-status-text">
+                    <span id="core-state-label" class="state-label">STANDBY</span>
+                    <span id="core-state-sub" class="state-sub">GEMINI-2.5-FLASH-LITE // READY</span>
+                </div>
+            </section>
+
+            <!-- RIGHT: TRANSCRIPT -->
+            <section class="transcript-section">
+
+                <div class="glass-panel main-log">
                     <div class="panel-header-sub">SYSTEM_TRANSCRIPT</div>
 
-                    <!-- 🧠 THINKING -->
+                    <!-- Thinking Indicator -->
                     <div id="thinking-indicator" class="thinking hidden">
-                        JARVIS is thinking...
+                        PROCESSING NEURAL RESPONSE...
                     </div>
 
                     <div id="transcript" class="transcript-feed">
-                        <p class="system-msg">JARVIS online.</p>
+                        <p class="system-msg"><span class="log-tag">SYS//</span> JARVIS interface online. All systems nominal.</p>
                     </div>
 
-                    <!-- INPUT -->
+                    <!-- Input -->
                     <div class="input-area">
                         <div class="input-wrapper">
-                            <input id="user-input" placeholder="> Awaiting command..." autocomplete="off">
-                            <button id="send-btn">EXECUTE</button>
+                            <input id="user-input" placeholder="> awaiting command..." autocomplete="off">
+                            <button id="send-btn">EXEC</button>
                         </div>
                     </div>
-
                 </div>
+
             </section>
 
         </main>

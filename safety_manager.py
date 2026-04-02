@@ -27,13 +27,13 @@ class SafetyManager:
             "vision": [self.DEVELOPMENT, self.PRODUCTION],
             "screen_capture": [self.DEVELOPMENT, self.PRODUCTION],
             "open_app": [self.DEVELOPMENT, self.PRODUCTION],
-            "shell_execution": [self.PRODUCTION],
-            "create_skill": [self.PRODUCTION],
-            "file_management": [self.PRODUCTION],
-            "mouse_control": [self.PRODUCTION],
-            "keyboard_control": [self.PRODUCTION],
-            "email_sender": [self.PRODUCTION],
-            "send_whatsapp_message": [self.PRODUCTION],
+            "shell_execution": [self.DEVELOPMENT, self.PRODUCTION],
+            "create_skill": [self.DEVELOPMENT, self.PRODUCTION],
+            "file_management": [self.DEVELOPMENT, self.PRODUCTION],
+            "mouse_control": [self.DEVELOPMENT, self.PRODUCTION],
+            "keyboard_control": [self.DEVELOPMENT, self.PRODUCTION],
+            "email_sender": [self.DEVELOPMENT, self.PRODUCTION],
+            "send_whatsapp_message": [self.DEVELOPMENT, self.PRODUCTION],
         }
 
     def _setup_audit_logger(self):
