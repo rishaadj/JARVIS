@@ -33,15 +33,19 @@ class SemanticMemory:
     def _get_embedding(self, text):
         """Fetches embedding vector from Gemini."""
         try:
-            # Note: The 'genai' client is likely configured globally or passed in.
-            # Using the chat_obj to access the model for embedding.
-            import google.generativeai as genai
-            result = genai.embed_content(
-                model="models/embedding-001",
-                content=text,
-                task_type="retrieval_document"
+            from google import genai
+            import os
+            # Using the first key from Rotator pool for basic embedding tasks
+            keys = os.getenv("GEMINI_API_KEYS", "")
+            first_key = [k.strip() for k in keys.replace(',', ' ').split() if k.strip()][0]
+            
+            client = genai.Client(api_key=first_key)
+            result = client.models.embed_content(
+                model="text-embedding-004",
+                contents=text
             )
-            return np.array(result['embedding'])
+            # Extracted vector based on new SDK schema
+            return np.array(result.embeddings[0].values)
         except Exception as e:
             print(f"[SEMANTIC MEMORY] Embedding Error: {e}")
             return None

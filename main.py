@@ -19,10 +19,12 @@ from autonomous_core import start_autonomous_core
 from utils.audio_manager import audio_manager
 from topology_engine import TopologyEngine
 
+from utils.gemini_rotator import GeminiRotator
+
 # --- CONFIGURATION ---
 load_dotenv()
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash").strip()
+GEMINI_API_KEYS = os.getenv("GEMINI_API_KEYS", "").strip()
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite").strip()
 JARVIS_PIN = os.getenv("JARVIS_PIN", "0000").strip()
 
 # --- INITIALIZE FLASK & SOCKETIO FIRST ---
@@ -41,15 +43,13 @@ def on_verify_pin(data):
         socketio.emit('auth_failure')
         print(f"[SECURITY] Denied unauthorized access attempt.")
 
-# --- GEMINI SETUP (Modern SDK) ---
+# --- GEMINI SETUP (Modern SDK with API Key Rotator) ---
 chat_session = None
-if GEMINI_API_KEY and GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
-    client = genai.Client(api_key=GEMINI_API_KEY)
-    # Create a stateful chat session
-    chat_session = client.chats.create(model=GEMINI_MODEL)
-    print(f"[SYSTEM] Gemini Brain Linked: {GEMINI_MODEL}")
+if GEMINI_API_KEYS and GEMINI_API_KEYS != "YOUR_GEMINI_API_KEY":
+    chat_session = GeminiRotator(api_keys_str=GEMINI_API_KEYS, model=GEMINI_MODEL)
+    print(f"[SYSTEM] Gemini Brain Linked: {GEMINI_MODEL} (Stateless Rotator Active)")
 else:
-    print("[ERROR] GEMINI_API_KEY is not set. Core will run in UI-only mode.")
+    print("[ERROR] GEMINI_API_KEYS is not set. Core will run in UI-only mode.")
 
 # Audio Queue for Vosk
 audio_queue = queue.Queue()

@@ -25,53 +25,58 @@ class VisualObserver:
                 'timestamp': datetime.now().strftime("%H:%M:%S")
             })
 
-    def observe_loop(self):
-        print(f"[VISUAL_OBSERVER] Awareness loop started (Interval: {self.scan_interval}s).")
-        while self.active:
-            try:
-                # 1. Capture Screen
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filepath = os.path.abspath(f"screenshots/observer_{timestamp}.png")
-                
-                screenshot = pyautogui.screenshot()
-                # Resize for faster API transmission if needed, but for now full size is OK.
-                screenshot.save(filepath)
-                self.last_screenshot_path = filepath
-                
-                # 2. Analyze with Gemini
-                img = Image.open(filepath)
-                prompt = """
-                You are the 'Visual Cortex' of JARVIS. 
-                Analyze this screen and provide a CONCISE description of what is happening.
-                Focus on:
-                1. Active applications.
-                2. Visible progress (downloads, rendering, errors).
-                3. Content the user is currently focused on.
-                
-                Respond in a structured format:
-                AWARENESS: <context summary>
-                EVENTS: <notable items>
-                """
-                
-                # Use the chat object to send the message
-                response = self.chat.send_message([prompt, img])
-                self.visual_context = response.text.strip()
-                
-                # 3. Update UI
-                self._emit_update(self.visual_context, f"/screenshots/{os.path.basename(filepath)}")
-                
-                # 4. Clean up old screenshots (keep only the last 5)
-                self._cleanup_screenshots()
-                
-            except Exception as e:
-                # 🛡️ 429 Rate Limit Mitigation
-                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                    print(f"[VISUAL_OBSERVER] Brain Overloaded (429). Eye rest for 10 minutes...")
-                    time.sleep(600) # Sleep longer if 429 occurs
-                else:
-                    print(f"[VISUAL_OBSERVER] Error: {e}")
+    def scan_now(self, prompt_context=""):
+        """Event-Driven On-Demand Capture of Active Window."""
+        print(f"[VISUAL_OBSERVER] Taking on-demand vision scan...")
+        try:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filepath = os.path.abspath(f"screenshots/observer_{timestamp}.png")
             
-            time.sleep(self.scan_interval)
+            import pygetwindow as gw
+            window = gw.getActiveWindow()
+            if window and window.width > 0 and window.height > 0:
+                region = (window.left, window.top, window.width, window.height)
+                screenshot = pyautogui.screenshot(region=region)
+                w_title = window.title
+            else:
+                screenshot = pyautogui.screenshot()
+                w_title = "Desktop"
+                
+            # Downscale resolution to max 720p equivalent to save Tokens
+            screenshot.thumbnail((1280, 720))
+            screenshot.save(filepath)
+            self.last_screenshot_path = filepath
+            
+            img = Image.open(filepath)
+            prompt = f"""
+            You are the 'Visual Cortex' of JARVIS. 
+            User Context: {prompt_context}
+            Active Window Title: {w_title}
+            
+            Analyze this screen and provide a CONCISE description of what is happening.
+            Focus on:
+            1. Visible progress (downloads, errors, code).
+            2. Content the user is currently focused on.
+            
+            Respond in a structured format:
+            AWARENESS: <context summary>
+            EVENTS: <notable items>
+            """
+            
+            response = self.chat.send_message([prompt, img])
+            self.visual_context = response.text.strip()
+            
+            self._emit_update(self.visual_context, f"/screenshots/{os.path.basename(filepath)}")
+            self._cleanup_screenshots()
+            
+            return self.visual_context
+        except Exception as e:
+            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                err = "[VISUAL_OBSERVER] Brain Overloaded (429)."
+            else:
+                err = f"[VISUAL_OBSERVER] Vision Error: {e}"
+            print(err)
+            return err
 
     def _cleanup_screenshots(self):
         files = sorted([os.path.join("screenshots", f) for f in os.listdir("screenshots") if f.startswith("observer_")], 
@@ -82,10 +87,9 @@ class VisualObserver:
                 except: pass
 
     def start(self):
-        if not self.active:
-            self.active = True
-            self.thread = threading.Thread(target=self.observe_loop, daemon=True)
-            self.thread.start()
+        # Background polling disabled. Eye operates strictly on demand now.
+        print("[VISUAL_OBSERVER] Neural Optics loaded. (Event-Driven Mode)")
+        self.active = True
 
     def stop(self):
         self.active = False

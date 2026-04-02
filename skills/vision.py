@@ -16,8 +16,15 @@ def execute(params):
     filepath = f"screenshots/scr_{timestamp}.png"
 
     try:
-        # Take the screenshot
-        screenshot = pyautogui.screenshot()
+        import pygetwindow as gw
+        window = gw.getActiveWindow()
+        if window and window.width > 0 and window.height > 0:
+            region = (window.left, window.top, window.width, window.height)
+            screenshot = pyautogui.screenshot(region=region)
+        else:
+            screenshot = pyautogui.screenshot()
+            
+        screenshot.thumbnail((1280, 720))
         screenshot.save(filepath)
         
         # Return the path so the Core knows where to find the image

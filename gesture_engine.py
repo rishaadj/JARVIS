@@ -14,6 +14,8 @@ import pyautogui
 import threading
 import time
 import numpy as np
+import os
+import urllib.request
 
 class GestureEngine:
     def __init__(self, socketio=None):
@@ -21,19 +23,32 @@ class GestureEngine:
         self.active = False
         self.cap = None
         self.has_dependencies = HAS_MEDIAPIPE
+        self.detector = None
         
         if HAS_MEDIAPIPE:
             try:
-                self.mp_hands = mp.solutions.hands
-                self.hands = self.mp_hands.Hands(
-                    static_image_mode=False,
-                    max_num_hands=1,
-                    min_detection_confidence=0.7,
-                    min_tracking_confidence=0.5
+                from mediapipe.tasks import python
+                from mediapipe.tasks.python import vision
+                
+                # Model provisioning
+                model_path = 'hand_landmarker.task'
+                if not os.path.exists(model_path):
+                    print("[GESTURE ENGINE] Downloading HandLandmarker model (~5MB)...")
+                    url = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task"
+                    urllib.request.urlretrieve(url, model_path)
+                    print("[GESTURE ENGINE] Model download complete.")
+                
+                base_options = python.BaseOptions(model_asset_path=model_path)
+                options = vision.HandLandmarkerOptions(
+                    base_options=base_options,
+                    num_hands=1,
+                    min_hand_detection_confidence=0.7,
+                    min_hand_presence_confidence=0.5
                 )
-                self.mp_draw = mp.solutions.drawing_utils
-            except AttributeError:
-                print("[GESTURE ENGINE] Error: mediapipe.solutions not found. Disabling gesture engine.")
+                self.detector = vision.HandLandmarker.create_from_options(options)
+                
+            except Exception as e:
+                print(f"[GESTURE ENGINE] Error initializing new Tasks API: {e}. Disabling gesture engine.")
                 self.has_dependencies = False
         
         self.screen_w, self.screen_h = pyautogui.size()
@@ -41,8 +56,6 @@ class GestureEngine:
         # Smoothing variables
         self.prev_x, self.prev_y = 0, 0
         self.smooth_factor = 7 # Higher = smoother but more lag
-        
-        # State tracking
         self.is_pinch = False
 
     def start(self):
@@ -71,16 +84,20 @@ class GestureEngine:
             # Flip for mirror effect
             img = cv2.flip(img, 1)
             img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            results = self.hands.process(img_rgb)
+            
+            # Format image for MP Tasks
+            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=img_rgb)
+            detection_result = self.detector.detect(mp_image)
 
             status = "LOST"
-            if results.multi_hand_landmarks:
+            if getattr(detection_result, 'hand_landmarks', []):
                 status = "TRACKING"
-                hand_landmarks = results.multi_hand_landmarks[0]
+                # Hand landmarks is a list of hands, get the first hand (which is a list of landmarks)
+                landmarks = detection_result.hand_landmarks[0]
                 
                 # Get Index Finger Tip (8) and Thumb Tip (4)
-                index_tip = hand_landmarks.landmark[8]
-                thumb_tip = hand_landmarks.landmark[4]
+                index_tip = landmarks[8]
+                thumb_tip = landmarks[4]
                 
                 # 🖱️ MOUSE MOVE (Index Finger)
                 # Map camera coordinates to screen coordinates

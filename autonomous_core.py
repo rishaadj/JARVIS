@@ -62,8 +62,8 @@ class AutonomousCore:
         self.gesture_active = False
         
         # ⏱️ Quota Management (Milestone 7 Throttle)
-        self.last_goal_check = 0
-        self.goal_check_interval = 600 # 10 minutes between autonomous goal checks
+        self.last_goal_check = time.time()
+        self.goal_check_interval = 1800 # 30 minutes between autonomous goal checks
         self.cooldown_until = 0 # ⏱️ Rate-limit suppression
 
         # 🧩 State & Context Management
@@ -282,8 +282,11 @@ class AutonomousCore:
                 return
 
             self._set_busy(True)
+            
+            # Strict Explicit Vision Context
+            v_ctx = "Visual context is intentionally blank to save quota. ONLY use the 'vision' skill if the user EXPLICITLY asks you to look at their screen or analyze an image."
+                
             context_snapshot = "\n".join(list(self.context_buffer))
-            v_ctx = self.visual_observer.get_context()
             
             # 🧠 Semantic Recall
             past_memories = ""
@@ -332,6 +335,7 @@ class AutonomousCore:
                     self._emit_jarvis_message(final_text)
                     self.executor_agent.execute_skill("speak", {"text": final_text})
                     self.context_buffer.append(f"User: {t_data} | JARVIS: {final_text}")
+                    self._compress_memory_if_needed()
                     # 💡 Semantic Memory: Store the interaction
                     self.memory.store_semantic(f"User asked: {t_data}. JARVIS responded: {final_text}", {"type": "conversation"})
                     return
@@ -342,6 +346,7 @@ class AutonomousCore:
                 
                 self.state["last_action"] = {"skill": skill_name, "params": params}
                 self.context_buffer.append(f"User: {t_data} | JARVIS: {action_text}")
+                self._compress_memory_if_needed()
 
                 # UI Confirmation Gating
                 if (not self.allow_dangerous) and (skill_name in self.dangerous_skills):
@@ -434,6 +439,19 @@ class AutonomousCore:
             except Exception as e:
                 self.log(f"Core Loop Error: {e}", "error")
                 time.sleep(5)
+
+    def _compress_memory_if_needed(self):
+        """Compresses the context buffer into a short summary to save tokens."""
+        if len(self.context_buffer) >= 5:
+            history = "\n".join(self.context_buffer)
+            self.log("Context buffer full. Compressing memory...", "system")
+            try:
+                summary_prompt = f"Summarize this conversation concisely in 2 sentences:\n{history}"
+                summary = self.chat.send_message(summary_prompt).text
+                self.context_buffer.clear()
+                self.context_buffer.append(f"[Past Context Summary]: {summary}")
+            except Exception as e:
+                self.log(f"Memory Compression Error: {e}", "error")
 
 def start_autonomous_core(run_skill_fn, system_monitor_fn, chat_obj, socketio_obj):
     core = AutonomousCore(run_skill_fn, system_monitor_fn, chat_obj, socketio_obj)
