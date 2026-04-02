@@ -1,7 +1,9 @@
 .env
 memory.json
 conversation_log.json
+vosk-model-*/
 model/
+*.zip
 __pycache__/
 *.mp3
 *.log

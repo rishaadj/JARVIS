@@ -59,12 +59,27 @@ core = None
 running = True
 
 # --- VOSK SETUP ---
-try:
-    vosk_model = Model("model")
-    rec = KaldiRecognizer(vosk_model, 16000)
-except Exception as e:
-    print(f"[ERROR] Vosk Model not found in /model folder: {e}")
-    vosk_model = None
+def load_vosk_model():
+    # Priority: High-Accuracy EN-IN > Small EN-IN > Generic Model
+    model_options = [
+        "vosk-model-en-in-0.5",
+        "vosk-model-small-en-in-0.4",
+        "model"
+    ]
+    
+    for m in model_options:
+        if os.path.exists(m):
+            try:
+                print(f"[SYSTEM] Initializing Sensory Input with: {m}")
+                return Model(m)
+            except Exception as e:
+                print(f"[WARNING] Failed to load model {m}: {e}")
+    
+    print("[ERROR] No Vosk models found. Please run 'setup_indian_vosk.py'.")
+    return None
+
+vosk_model = load_vosk_model()
+rec = KaldiRecognizer(vosk_model, 16000) if vosk_model else None
 
 # --- SKILL ENGINE ---
 def run_skill(skill_name, params=None):
