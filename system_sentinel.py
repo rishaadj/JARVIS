@@ -40,26 +40,32 @@ class SystemSentinel:
         while self.active:
             try:
                 # 1. Check System Telemetry
-                status = self.monitor.observe()
-                self.telemetry_history.append(status)
-                
-                # Check for sustained high load
-                if self._check_sustained_load():
-                    self._fire_event("critical_load", f"Sustained high system load detected: CPU {status.get('cpu')}% | RAM {status.get('ram')}%", priority="high")
+                try:
+                    status = self.monitor.observe()
+                    self.telemetry_history.append(status)
+                    
+                    # Check for sustained high load
+                    if self._check_sustained_load():
+                        self._fire_event("critical_load", f"Sustained high system load detected: CPU {status.get('cpu')}% | RAM {status.get('ram')}%", priority="high")
 
-                # Check for low battery
-                battery = status.get('battery')
-                if battery and battery.get('percent', 100) < 20 and not battery.get('power_plugged', True):
-                    self._fire_event("low_battery", f"Critical battery level: {battery['percent']}%", priority="high")
+                    # Check for low battery
+                    battery = status.get('battery')
+                    if battery and battery.get('percent', 100) < 20 and not battery.get('power_plugged', True):
+                        self._fire_event("low_battery", f"Critical battery level: {battery['percent']}%", priority="high")
+                except Exception as e:
+                    print(f"[SENTINEL] Telemetry Error: {e}")
 
                 # 2. Check Security Context
-                if hasattr(self.safety, "get_latest_violation"):
-                    violation = self.safety.get_latest_violation()
-                    if violation:
-                        self._fire_event("security_alert", f"Security violation detected: {violation}", priority="high")
+                try:
+                    if hasattr(self.safety, "get_latest_violation"):
+                        violation = self.safety.get_latest_violation()
+                        if violation:
+                            self._fire_event("security_alert", f"Security violation detected: {violation}", priority="high")
+                except Exception as e:
+                    print(f"[SENTINEL] Security Check Error: {e}")
 
             except Exception as e:
-                print(f"[SENTINEL] Monitor Error: {e}")
+                print(f"[SENTINEL] Loop Error: {e}")
             
             time.sleep(self.interval)
 

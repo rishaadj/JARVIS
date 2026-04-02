@@ -177,18 +177,27 @@ if __name__ == "__main__":
     print("--- JARVIS SYSTEM ONLINE ---")
     print("="*30 + "\n")
 
-    # 1. Initialize the Core (The Brain)
-    if chat_session is not None:
-        # We pass the chat_session (stateful) instead of just the client
-        core = start_autonomous_core(run_skill, system_monitor, chat_session, socketio)
-    
-    # 2. Start Services
-    threading.Thread(target=run_web_server, daemon=True).start()
-    threading.Thread(target=system_log_loop, daemon=True).start()
+    try:
+        # 1. Initialize the Core (The Brain)
+        if chat_session is not None:
+            # We pass the chat_session (stateful) instead of just the client
+            core = start_autonomous_core(run_skill, system_monitor, chat_session, socketio)
+        
+        # 2. Start Services
+        threading.Thread(target=run_web_server, daemon=True).start()
+        threading.Thread(target=system_log_loop, daemon=True).start()
 
-    # 3. Start Voice (Blocking Main Thread)
-    if vosk_model:
-        listen_loop()
-    else:
-        print("[ERROR] Voice system failed. JARVIS will only respond to UI text input.")
-        while True: time.sleep(1)
+        # 3. Start Voice (Blocking Main Thread)
+        if vosk_model:
+            listen_loop()
+        else:
+            print("[ERROR] Voice system failed. JARVIS will only respond to UI text input.")
+            while running:
+                time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n[SYSTEM] Administrator initiated shutdown. Gracefully safely exiting JARVIS...")
+    finally:
+        running = False
+        if core:
+            core.active = False
+        print("[SYSTEM] System Offline. Goodbye.")
