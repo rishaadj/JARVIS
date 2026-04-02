@@ -147,6 +147,9 @@ def listen_loop():
                 user_text = result.get("text", "")
                 if user_text:
                     process_intent(user_text)
+                    
+            # Yield CPU to prevent 100% Core Lock
+            time.sleep(0.01)
 
 def process_intent(user_input: str) -> None:
     """Updates UI and hands the intent to the autonomous core."""

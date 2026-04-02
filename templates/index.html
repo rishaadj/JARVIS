@@ -53,11 +53,11 @@
                 <div class="glass-card observer-panel">
                     <div class="card-header">VISUAL_AWARENESS</div>
                     <div class="observer-content">
-                        <div id="observer-scan-container" class="scan-container">
-                            <div class="scan-overlay"></div>
-                            <img id="last-scan-img" src="" alt="Awaiting Scan..." class="scan-img">
+                        <div id="observer-scan-container" class="scan-container" style="border-bottom: 1px solid rgba(0, 243, 255, 0.2);">
+                            <div class="scanner"></div>
+                            <img id="last-scan-img" src="" alt="Awaiting Scan..." class="scan-img" style="width: 100%; object-fit: cover;">
                         </div>
-                        <div id="observer-context" class="observer-text">
+                        <div id="observer-context" class="observer-text" style="padding: 10px; font-size: 0.8rem; font-family: 'Courier New', monospace; color: #a0ffff;">
                             Initializing neural vision...
                         </div>
                     </div>
@@ -84,10 +84,29 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 📁 FILE WATCHER (NEW BENTO ITEM) -->
+                <div class="glass-card file-watcher-panel">
+                    <div class="card-header">FILE_WATCHER</div>
+                    <ul class="skills-list" style="padding: 1rem;">
+                        <li style="font-family: 'Courier New', monospace;"><span class="dot online"></span> E:\Projects\JARVIS [MONITORING]</li>
+                        <li style="font-family: 'Courier New', monospace; opacity: 0.6;"><span class="dot online"></span> _index.html (Sync)</li>
+                        <li style="font-family: 'Courier New', monospace; opacity: 0.6;"><span class="dot online"></span> _style.css (Sync)</li>
+                    </ul>
+                </div>
             </section>
 
             <!-- CORE -->
-            <section class="center-panel">
+            <section class="center-panel" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2rem;">
+                
+                <!-- 🧠 NEURAL LINK (NEW BENTO ITEM) -->
+                <div class="glass-card neural-link" style="width: 100%; max-width: 380px;">
+                    <div class="card-header" style="text-align: center; background: rgba(0, 243, 255, 0.2);">NEURAL_LINK_STATUS</div>
+                    <div style="text-align:center; padding: 10px; font-family: 'Courier New', monospace; color: var(--accent-blue); letter-spacing: 4px; animation: pulse-glow 2s infinite;">
+                        ESTABLISHED
+                    </div>
+                </div>
+
                 <div class="arc-reactor">
                     <svg viewBox="0 0 200 200" class="reactor-svg">
                         <!-- Outer Ring -->

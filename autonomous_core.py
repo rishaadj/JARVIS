@@ -127,8 +127,9 @@ class AutonomousCore:
             self.socketio.emit("state_change", "processing" if busy else "idle")
 
     def _emit_jarvis_message(self, text: str) -> None:
-        if self.socketio and text and text.strip():
-            self.socketio.emit("new_message", {"sender": "jarvis", "text": text})
+        safe_text = str(text).strip()
+        if self.socketio and safe_text:
+            self.socketio.emit("new_message", {"sender": "jarvis", "text": safe_text})
 
     def _inject_socketio(self, params: dict) -> dict:
         """Inject Socket.IO into tool params for background skills."""
