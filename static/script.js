@@ -80,7 +80,6 @@ function sendMessage() {
     const text = userInput.value.trim();
     if (!text) return;
 
-    addUser(text);
     thinking.classList.remove('hidden');
     socket.emit('ui_command', text);
 
@@ -102,6 +101,34 @@ userInput.addEventListener('keydown', (e) => {
         e.preventDefault();
     }
 });
+
+// --- Brain Selector ---
+const brainSelector = document.getElementById('brain-selector');
+if (brainSelector) {
+    const COLOR_MAP = {
+        auto:       { accent: 'var(--accent-cyan)', h: 'var(--h-cyan)' },
+        gemini:     { accent: 'var(--accent-blue)', h: 'var(--h-blue)' },
+        groq:       { accent: 'var(--accent-gold)', h: 'var(--h-gold)' },
+        ollama:     { accent: 'var(--accent-green)', h: 'var(--h-green)' },
+        uncensored: { accent: 'var(--accent-pink)', h: 'var(--h-pink)' }
+    };
+
+    brainSelector.addEventListener('change', () => {
+        const provider = brainSelector.value;
+        socket.emit('update_brain_provider', { provider: provider });
+        
+        // Visual Feedback: Change Arc Reactor & HUD theme
+        const theme = COLOR_MAP[provider] || COLOR_MAP.auto;
+        document.documentElement.style.setProperty('--state-accent', theme.accent);
+        document.documentElement.style.setProperty('--state-h', theme.h);
+
+        if (coreStateSub) {
+            coreStateSub.textContent = (provider === 'auto') ? 'FAILOVER MODE // ACTIVE' : `${provider.toUpperCase()} // FORCED`;
+        }
+        
+        addSystemLog(`Neural Link recalibrated: ${provider.toUpperCase()} engaged.`);
+    });
+}
 
 // =============================================================
 //  4. CORE STATE MANAGEMENT (Deep HUD Integration)

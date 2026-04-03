@@ -112,6 +112,9 @@ class GestureEngine:
             if frame is None:
                 time.sleep(0.05)
                 continue
+            
+            # Consume the frame so we don't process the same one 10 times before the hardware gives us a new one
+            self.latest_frame = None
 
             try:
                 # Copy frame to avoid thread race conditions

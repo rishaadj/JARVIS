@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 import os
 import sys
 import json
@@ -8,7 +11,6 @@ import sounddevice as sd
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 from vosk import Model, KaldiRecognizer
-from dotenv import load_dotenv
 
 # --- UPDATED 2026 SDK IMPORT ---
 # pip install google-genai
@@ -19,10 +21,9 @@ from autonomous_core import start_autonomous_core
 from utils.audio_manager import audio_manager
 from topology_engine import TopologyEngine
 
-from utils.gemini_rotator import GeminiRotator
+from utils.neural_switchboard import NeuralSwitchboard
 
 # --- CONFIGURATION ---
-load_dotenv()
 GEMINI_API_KEYS = os.getenv("GEMINI_API_KEYS", "").strip()
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite").strip()
 JARVIS_PIN = os.getenv("JARVIS_PIN", "0000").strip()
@@ -43,11 +44,21 @@ def on_verify_pin(data):
         socketio.emit('auth_failure')
         print(f"[SECURITY] Denied unauthorized access attempt.")
 
-# --- GEMINI SETUP (Modern SDK with API Key Rotator) ---
+# --- NEURAL BRAIN SETUP (Multi-Provider Switchboard) ---
 chat_session = None
-if GEMINI_API_KEYS and GEMINI_API_KEYS != "YOUR_GEMINI_API_KEY":
-    chat_session = GeminiRotator(api_keys_str=GEMINI_API_KEYS, model=GEMINI_MODEL)
-    print(f"[SYSTEM] Gemini Brain Linked: {GEMINI_MODEL} (Stateless Rotator Active)")
+if GEMINI_API_KEYS:
+    GROQ_KEY = os.getenv("GROQ_API_KEY", "").strip()
+    O_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2-vision").strip()
+    U_MODEL = os.getenv("OLLAMA_UNCENSORED_MODEL", "dolphin-llama3").strip()
+    
+    chat_session = NeuralSwitchboard(
+        gemini_api_keys=GEMINI_API_KEYS, 
+        gemini_model=GEMINI_MODEL,
+        groq_api_key=GROQ_KEY if "YOUR_GROQ" not in GROQ_KEY else None,
+        ollama_model=O_MODEL,
+        ollama_uncensored_model=U_MODEL
+    )
+    print(f"[SYSTEM] Neural Brain Synchronized: {GEMINI_MODEL} (Switchboard Active)")
 else:
     print("[ERROR] GEMINI_API_KEYS is not set. Core will run in UI-only mode.")
 
@@ -60,10 +71,10 @@ running = True
 
 # --- VOSK SETUP ---
 def load_vosk_model():
-    # Priority: Small EN-IN (Fast) > Large EN-IN > Generic Model
+    # Priority: Large EN-IN (High Accuracy) > Small EN-IN (Fast) > Generic Model
     model_options = [
-        "vosk-model-small-en-in-0.4",
         "vosk-model-en-in-0.5",
+        "vosk-model-small-en-in-0.4",
         "model"
     ]
     
@@ -132,18 +143,28 @@ def on_ui_command(data):
             return
         process_intent(text.strip())
 
+@socketio.on('update_brain_provider')
+def on_update_brain(data):
+    """Updates the active AI provider in the Autonomous Core."""
+    provider = data.get("provider", "auto")
+    if core:
+        core.set_active_provider(provider)
+        print(f"[SYSTEM] HUD update: Active Brain set to {provider.upper()}")
+
 def run_web_server():
     # Use allow_unsafe_werkzeug to permit running inside the JARVIS environment
     socketio.run(app, host='0.0.0.0', port=5000, debug=False, use_reloader=False, allow_unsafe_werkzeug=True)
 
 # --- SENSORY INPUT (VOICE) ---
+INTERRUPT_ALLOWLIST = {"stop", "jarvis", "wait", "cancel", "shut up", "hush", "stark"}
+
 def audio_callback(indata, frames, time_info, status):
     if status:
         print(status, file=sys.stderr)
     audio_queue.put(bytes(indata))
 
 def listen_loop():
-    """Main voice recognition loop using Vosk with optimized 'Stop on Speech'."""
+    """Main voice recognition loop with Smart Barge-In & Noise Filtering."""
     print("[SYSTEM] Voice Recognition Active...")
     try:
         with sd.RawInputStream(samplerate=16000, blocksize=8000, dtype='int16',
@@ -154,21 +175,43 @@ def listen_loop():
                 except queue.Empty:
                     continue
                 
-                # Optimized "Stop on Speech"
+                # 1. Smart Barge-In (The Filter)
                 if audio_manager.is_speaking:
-                    # Check partial results for ANY speech activity
                     partial_str = rec.PartialResult()
                     if partial_str:
                         partial_data = json.loads(partial_str)
-                        if partial_data.get("partial", "").strip():
-                            print("[SYSTEM] User interruption detected. Stopping JARVIS.")
+                        partial_text = partial_data.get("partial", "").strip().lower()
+                        
+                        # Only allow high-priority interrupts while JARVIS is speaking
+                        if any(cmd in partial_text for cmd in INTERRUPT_ALLOWLIST):
+                            print(f"[SYSTEM] Priority Interrupt Detected: '{partial_text}'")
                             audio_manager.stop_speaking()
+                        else:
+                            # Silence the "self-listening" noise
+                            continue
 
                 if rec.AcceptWaveform(data):
                     result = json.loads(rec.Result())
-                    user_text = result.get("text", "")
-                    if user_text:
+                    user_text = result.get("text", "").strip()
+                    
+                    if not user_text:
+                        continue
+
+                    # 2. Heuristic Nonsense Filter
+                    # Ignore 1-word or 2-letter fragments unless they are in allowlist (e.g. "fellow man", "selling imagine")
+                    words = user_text.split()
+                    is_interrupt = any(cmd in user_text.lower() for cmd in INTERRUPT_ALLOWLIST)
+                    
+                    if len(words) < 2 and not is_interrupt:
+                        # print(f"[DEBUG] Noise Ignored: '{user_text}'")
+                        continue
+                    
+                    # 3. Only process if not currently speaking (Echo Guard)
+                    if not audio_manager.is_speaking or is_interrupt:
                         process_intent(user_text)
+                    
+    except Exception as e:
+        print(f"[ERROR] listen_loop error: {e}")
     except Exception as e:
         print(f"[ERROR] listen_loop error: {e}")
 

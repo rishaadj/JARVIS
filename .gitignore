@@ -3,6 +3,9 @@ memory.json
 conversation_log.json
 vosk-model-*/
 model/
+.ollama/
+screenshots/
+OllamaApp/
 *.zip
 __pycache__/
 *.mp3

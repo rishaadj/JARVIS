@@ -67,6 +67,22 @@ graph TD
 
 ---
 
+## 🛰️ Neural Switchboard (Multi-Provider)
+
+JARVIS is now powered by a **Neural Switchboard** architecture that ensures 100% uptime with no costs:
+
+1.  **Primary:** Google Gemini (2.5 Flash Lite) - Native Vision & 1.5M Context.
+2.  **Fallback 1:** [Groq Cloud](https://console.groq.com/) - Blazing fast Llama 3.2 Vision (800+ tokens/sec).
+3.  **Fallback 2:** [Ollama](https://ollama.com/) - 100% Offline privacy with Llama 3.2.
+4.  **Final Resort (Unfiltered):** Ollama Dolphin - A completely uncensored reasoning model for unrestricted control.
+
+If Gemini hits a 429 quota limit, JARVIS automatically fails over to Groq. If offline, he switches to Ollama.
+ 
+> [!TIP]
+> **Manual Override:** You can manually switch between these "Brains" via the Neural Bridge selector in the HUD sidebar. The Arc Reactor will change colors (Blue, Gold, Green, Pink) to show which brain is active.
+
+---
+
 ## 🧬 Self-Evolving System
 
 - `coder_agent.py`
@@ -145,14 +161,41 @@ Triggers:
 
 ---
 
-## 🚀 Installation
+## 🚀 Installation & Setup
+ 
+Follow these steps to synchronize JARVIS with your system:
+ 
+### 1. 📂 File Setup
 
 ```bash
 git clone https://github.com/rishaadj/JARVIS.git
 cd JARVIS
 pip install -r requirements.txt
+
+# --- MULTI-PROVIDER BRAIN ---
+# 1. Get free Gemini keys at aistudio.google.com
+# 2. Get free Groq API Keys at console.groq.com
+# 3. Download Ollama at https://ollama.com/download
+#    - Run: ollama pull llama3.2-vision
+#    - Run: ollama pull dolphin-llama3
+
+# Download the High-Accuracy Vosk Voice Recognition model (~1GB)
+python setup_indian_vosk.py
+
 python main.py
 ```
+ 
+---
+ 
+## 🔒 Privacy & Security
+ 
+By default, JARVIS is configured to keep your data local and private. The following are **ignored** by version control (`.gitignore` to prevent leaking private data or large model files):
+- `.env` (API keys)
+- `.ollama/` (Local model weights)
+- `screenshots/` (Visual context history)
+- `memory.json` (Long-term semantic memory)
+- `conversation_log.json` (Transcript history)
+- `vosk-model-*/` (Large voice recognition models)
 
 ---
 
@@ -162,9 +205,10 @@ python main.py
 |--------------------|--------------|
 | Multi-Agent System | ✅ Complete   |
 | Autonomous Core    | ✅ Complete   |
-| Memory System      | ✅ Complete   |
-| Neural Voice       | ✅ Complete   |
-| Vision System      | 🚧 In Progress |
+| Neural Switchboard | ✅ Complete   |
+| Uncensored Mode    | ✅ Complete   |
+| Vision System      | ✅ Complete   |
+| Gesture Mastery    | 🚧 In Progress |
 
 ---
 

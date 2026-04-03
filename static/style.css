@@ -407,6 +407,50 @@ body::after {
     color: var(--state-accent);
     background: hsla(var(--state-h), 80%, 50%, 0.06);
 }
+ 
+/* Brain Selector Dropdown Styling */
+.bridge-control {
+    padding: var(--gap-sm);
+    display: flex;
+    flex-direction: column;
+}
+ 
+.hud-select {
+    width: 100%;
+    background: hsla(var(--state-h), 30%, 15%, 0.5);
+    border: 1px solid var(--border-subtle);
+    border-radius: 2px;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    padding: 6px 10px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s ease;
+    appearance: none; /* Hide default arrow */
+    background-image: linear-gradient(45deg, transparent 50%, var(--state-accent) 50%),
+                      linear-gradient(135deg, var(--state-accent) 50%, transparent 50%);
+    background-position: calc(100% - 15px) center, calc(100% - 10px) center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    text-transform: uppercase;
+}
+ 
+.hud-select:hover, .hud-select:focus {
+    border-color: var(--border-active);
+    color: var(--state-accent);
+    box-shadow: 0 0 10px hsla(var(--state-h), 100%, 50%, 0.1);
+    background-image: linear-gradient(45deg, transparent 50%, #fff 50%),
+                      linear-gradient(135deg, #fff 50%, transparent 50%);
+}
+ 
+.hud-select option {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    padding: 10px;
+    font-family: var(--font-mono);
+}
 
 .status-dot {
     width: 5px;

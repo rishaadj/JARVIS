@@ -22,6 +22,7 @@ from safety_manager import safety_manager
 from visual_observer import VisualObserver
 from system_sentinel import SystemSentinel
 from gesture_engine import GestureEngine
+from utils.gemini_rotator import QuotaExceededError
 
 class AutonomousCore:
     def __init__(self, run_skill_fn, system_monitor_fn, chat_obj, socketio_obj=None):
@@ -30,6 +31,7 @@ class AutonomousCore:
         self.system_monitor = system_monitor_fn
         self.chat = chat_obj
         self.socketio = socketio_obj
+        self.active_provider = "auto" # Default to failover
 
         # 🧠 Internal Systems
         self.memory = MemoryManager(self.chat)
@@ -165,6 +167,10 @@ Supported skills:
         if self.socketio and safe_text:
             self.socketio.emit("new_message", {"sender": "jarvis", "text": safe_text})
 
+    def set_active_provider(self, provider: str):
+        """Sets the manual override for the AI provider (Gemini, Groq, etc.)"""
+        self.active_provider = provider
+
     def _inject_socketio(self, params: dict) -> dict:
         """Inject Socket.IO into tool params for background skills."""
         if not self.socketio:
@@ -206,6 +212,9 @@ Supported skills:
             peek_intent = self.user_priority_queue[0].lower()
             if any(w in peek_intent for w in ["stop", "cancel", "abort", "shut up"]):
                 return {"type": "interrupt", "data": self.user_priority_queue.pop(0)}
+
+        if time.time() < self.cooldown_until:
+            return {"type": "idle", "data": None}
 
         if self.state.get("is_busy"):
             return {"type": "idle", "data": None}
@@ -363,7 +372,10 @@ Supported skills:
                     )
             
                     try:
-                        response = self.chat.send_message(prompt)
+                        # Pass the forced provider to the switchboard
+                        is_uncensored = (self.active_provider == "uncensored")
+                        response = self.chat.send_message(prompt, uncensored=is_uncensored, forced_provider=self.active_provider)
+                        
                         action_text = response.text.strip()
                         for line in action_text.splitlines():
                             if "ACTION:" in line.upper():
@@ -401,7 +413,8 @@ Supported skills:
                             if isinstance(result, str) and "SCREENSHOT_SAVED" in result:
                                 img_path = os.path.abspath(result.split(":", 1)[-1].strip())
                                 img = Image.open(img_path)
-                                vision_res = self.chat.send_message([f"Analyze screen for: {t_data}", img])
+                                is_uncensored = (self.active_provider == "uncensored")
+                                vision_res = self.chat.send_message([f"Analyze screen for: {t_data}", img], uncensored=is_uncensored, forced_provider=self.active_provider)
                                 final_text = vision_res.text
                                 self._emit_jarvis_message(final_text)
                                 self.executor_agent.execute_skill("speak", {"text": final_text})
@@ -414,8 +427,17 @@ Supported skills:
                         result = self.executor_agent.execute_skill(skill_name, self._inject_socketio(params))
                         if result is not None:
                             self._emit_jarvis_message(str(result))
+                        
+                        # --- OPTIMIZATION: Check for compression in background ---
+                        self._compress_memory_if_needed()
+                        
                         self._post_action_evaluate(action_text, str(result))
                     
+                    except QuotaExceededError as e:
+                        self.log("CRITICAL: ALL API KEYS EXHAUSTED. Initiating 10-minute hibernation.", "brain")
+                        self.cooldown_until = time.time() + 600 
+                        self._emit_jarvis_message("Sir, my neural processors are exhausted. I need 10 minutes to cool down before we continue.")
+                        self.executor_agent.execute_skill("speak", {"text": "Sir, my neural processors are exhausted. Initiating ten minute hibernation."})
                     except Exception as e:
                         if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
                             self.log("Brain Overloaded (429). Cooling down for 5 minutes.", "brain")
@@ -444,7 +466,8 @@ Supported skills:
                             if isinstance(result, str) and "SCREENSHOT_SAVED" in result:
                                 img_path = os.path.abspath(result.split(":", 1)[-1].strip())
                                 img = Image.open(img_path)
-                                vision_res = self.chat.send_message([f"Analyze screen for: {self.active_goal}", img])
+                                is_uncensored = (self.active_provider == "uncensored")
+                                vision_res = self.chat.send_message([f"Analyze screen for: {self.active_goal}", img], uncensored=is_uncensored, forced_provider=self.active_provider)
                                 self._emit_jarvis_message(vision_res.text)
                                 self.executor_agent.execute_skill("speak", {"text": vision_res.text})
                                 self._post_action_evaluate(t_data, str(vision_res.text))
@@ -467,6 +490,12 @@ Supported skills:
         threading.Thread(target=_async_act_worker, daemon=True).start()
     def _post_action_evaluate(self, last_action_text: str, result_text: str) -> None:
         if not self.active_goal: return
+        
+        # --- QUOTA SAVER ---
+        # Don't evaluate simple 'speak' or 'none' actions during high-frequency conversation
+        if "ACTION: speak" in last_action_text.upper() or "speak:" in last_action_text.lower():
+            return
+
         def _eval_worker():
             try:
                 status, suggestion = self.evaluator_agent.evaluate(self.active_goal, last_action_text, result_text)
@@ -489,17 +518,21 @@ Supported skills:
                 time.sleep(5)
 
     def _compress_memory_if_needed(self):
-        """Compresses the context buffer into a short summary to save tokens."""
-        if len(self.context_buffer) >= 5:
+        """Compresses the context buffer into a short summary to save tokens (Async)."""
+        if len(self.context_buffer) >= 8: # Increased limit to 8 to reduce frequency
             history = "\n".join(self.context_buffer)
-            self.log("Context buffer full. Compressing memory...", "system")
-            try:
-                summary_prompt = f"Summarize this conversation concisely in 2 sentences:\n{history}"
-                summary = self.chat.send_message(summary_prompt).text
-                self.context_buffer.clear()
-                self.context_buffer.append(f"[Past Context Summary]: {summary}")
-            except Exception as e:
-                self.log(f"Memory Compression Error: {e}", "error")
+            self.context_buffer.clear() # Clear immediately to prevent double-calls
+            
+            def _compress_worker():
+                self.log("Background memory compression initiated...", "system")
+                try:
+                    summary_prompt = f"Summarize this conversation concisely in 2 sentences:\n{history}"
+                    summary = self.chat.send_message(summary_prompt).text
+                    self.context_buffer.appendleft(f"[Past Context Summary]: {summary}")
+                except Exception as e:
+                    self.log(f"Memory Compression Error: {e}", "error")
+            
+            threading.Thread(target=_compress_worker, daemon=True).start()
 
 def start_autonomous_core(run_skill_fn, system_monitor_fn, chat_obj, socketio_obj):
     core = AutonomousCore(run_skill_fn, system_monitor_fn, chat_obj, socketio_obj)
