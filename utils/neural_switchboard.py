@@ -32,7 +32,7 @@ class NeuralSwitchboard:
         self.ollama_model = ollama_model
         self.ollama_uncensored_model = ollama_uncensored_model
         
-        print(f"[NEURAL SWITCHBOARD] Initialized. Gemini: {len(self.gemini_keys)} keys | Groq: {'Ready' if self.groq_key else 'None'} | Ollama: {self.ollama_model} | Uncensored: {self.ollama_uncensored_model}")
+        print(f"[NEURAL SWITCHBOARD] Initialized. Gemini: {len(self.gemini_keys)} keys | Groq: {len(self.groq_keys)} keys | Ollama: {self.ollama_model} | Uncensored: {self.ollama_uncensored_model}")
 
     def _rotate_gemini(self):
         self.gemini_idx = (self.gemini_idx + 1) % len(self.gemini_keys)
@@ -50,30 +50,33 @@ class NeuralSwitchboard:
         pil_img.save(buffered, format="PNG")
         return base64.b64encode(buffered.getvalue()).decode('utf-8')
 
-    def send_message(self, contents, uncensored=False, forced_provider=None):
-        """Unified entry point for text and visual reasoning."""
+    def _send_gemini(self, contents):
+        """Internal helper for Gemini reasoning with auto-rotation."""
+        if not self.gemini_client: return None
         
-        # 🔓 FORCE SPECIFIC PROVIDER (from HUD)
-        if forced_provider and forced_provider != 'auto':
-            if forced_provider == 'uncensored':
-                return self._try_ollama(contents, use_uncensored=True)
-            elif forced_provider == 'ollama':
-                return self._try_ollama(contents, use_uncensored=False)
-            elif forced_provider == 'groq':
-                # Try Groq directly
-                print(f"[SWITCHBOARD] Forced Provider: Groq")
-                return self._send_groq(contents)
-            elif forced_provider == 'gemini':
-                # Try Gemini directly
-                print(f"[SWITCHBOARD] Forced Provider: Gemini")
-                return self._send_gemini(contents)
+        attempts = 0
+        while attempts < len(self.gemini_keys):
+            try:
+                # Gemini handles list of [text, PIL_Image] natively
+                response = self.gemini_client.models.generate_content(
+                    model=self.gemini_model, contents=contents
+                )
+                return response
+            except Exception as e:
+                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                    print(f"[SWITCHBOARD] Gemini Limit Hit. Rotating...")
+                    self._rotate_gemini()
+                    attempts += 1
+                else:
+                    print(f"[SWITCHBOARD] Gemini unknown error: {e}")
+                    break
+        return None
 
-        # 🔓 FORCE UNCENSORED MODE (Legacy flag support)
-        if uncensored:
-            print(f"[SWITCHBOARD] 🔓 Uncensored Mode Engaged. Using {self.ollama_uncensored_model}")
-            return self._try_ollama(contents, use_uncensored=True)
+    def _send_groq(self, contents):
+        """Internal helper for Groq reasoning with auto-rotation."""
+        if not self.groq_client: return None
 
-        # Determine if we have an image
+        # Prepare payload
         has_image = False
         pil_image = None
         text_query = ""
@@ -88,61 +91,68 @@ class NeuralSwitchboard:
         else:
             text_query = str(contents)
 
+        attempts = 0
+        while attempts < len(self.groq_keys):
+            try:
+                messages = []
+                if has_image:
+                    b64 = self._pil_to_base64(pil_image)
+                    messages.append({
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": text_query},
+                            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}}
+                        ]
+                    })
+                else:
+                    messages.append({"role": "user", "content": text_query})
+
+                response = self.groq_client.chat.completions.create(
+                    model=self.groq_model,
+                    messages=messages,
+                )
+                
+                # Mock a Gemini-like response object
+                class MockResponse:
+                    def __init__(self, text): self.text = text
+                return MockResponse(response.choices[0].message.content)
+            except Exception as e:
+                if "429" in str(e):
+                    print(f"[SWITCHBOARD] Groq Limit Hit. Rotating...")
+                    self._rotate_groq()
+                    attempts += 1
+                else:
+                    print(f"[SWITCHBOARD] Groq failed: {e}")
+                    break
+        return None
+
+    def send_message(self, contents, uncensored=False, forced_provider=None):
+        # 🔓 FORCE SPECIFIC PROVIDER (from HUD)
+        if forced_provider and forced_provider != 'auto':
+            if forced_provider == 'uncensored':
+                return self._try_ollama(contents, use_uncensored=True)
+            elif forced_provider == 'ollama':
+                return self._try_ollama(contents, use_uncensored=False)
+            elif forced_provider == 'groq':
+                print(f"[SWITCHBOARD] Forced Provider: Groq")
+                return self._send_groq(contents)
+            elif forced_provider == 'gemini':
+                print(f"[SWITCHBOARD] Forced Provider: Gemini")
+                return self._send_gemini(contents)
+
+        # 🔓 FORCE UNCENSORED MODE (Legacy flag support)
+        if uncensored:
+            print(f"[SWITCHBOARD] 🔓 Uncensored Mode Engaged. Using {self.ollama_uncensored_model}")
+            return self._try_ollama(contents, use_uncensored=True)
+
         # --- STEP 1: Try Gemini (Primary) ---
-        if self.gemini_client:
-            attempts = 0
-            while attempts < len(self.gemini_keys):
-                try:
-                    # Gemini handles list of [text, PIL_Image] natively
-                    response = self.gemini_client.models.generate_content(
-                        model=self.gemini_model, contents=contents
-                    )
-                    return response
-                except Exception as e:
-                    if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                        print(f"[SWITCHBOARD] Gemini Limit Hit. Rotating...")
-                        self._rotate_gemini()
-                        attempts += 1
-                    else:
-                        print(f"[SWITCHBOARD] Gemini unknown error: {e}")
-                        break
-            print("[SWITCHBOARD] Gemini fully exhausted OR failed. Failing over to Groq...")
+        res = self._send_gemini(contents)
+        if res: return res
 
         # --- STEP 2: Try Groq (Secondary Online) ---
-        if self.groq_client:
-            attempts = 0
-            while attempts < len(self.groq_keys):
-                try:
-                    messages = []
-                    if has_image:
-                        b64 = self._pil_to_base64(pil_image)
-                        messages.append({
-                            "role": "user",
-                            "content": [
-                                {"type": "text", "text": text_query},
-                                {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}}
-                            ]
-                        })
-                    else:
-                        messages.append({"role": "user", "content": text_query})
-
-                    response = self.groq_client.chat.completions.create(
-                        model=self.groq_model,
-                        messages=messages,
-                    )
-                    
-                    # Mock a Gemini-like response object
-                    class MockResponse:
-                        def __init__(self, text): self.text = text
-                    return MockResponse(response.choices[0].message.content)
-                except Exception as e:
-                    if "429" in str(e):
-                        print(f"[SWITCHBOARD] Groq Limit Hit. Rotating...")
-                        self._rotate_groq()
-                        attempts += 1
-                    else:
-                        print(f"[SWITCHBOARD] Groq failed: {e}")
-                        break
+        print("[SWITCHBOARD] Gemini failed. Failing over to Groq...")
+        res = self._send_groq(contents)
+        if res: return res
 
         # --- STEP 3: Try Ollama (Local Offline Standard) ---
         res = self._try_ollama(contents)
@@ -152,7 +162,7 @@ class NeuralSwitchboard:
         print("[SWITCHBOARD] 🏁 Final Resort: Attempting Uncensored Reasoning...")
         res = self._try_ollama(contents, use_uncensored=True)
         if res: return res
-            
+
         return type("Err", (), {"text": "Sir, all neural systems (Online, Offline, and Uncensored) are currently unavailable."})()
 
     def _try_ollama(self, contents, use_uncensored=False):

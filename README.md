@@ -1,7 +1,7 @@
 # 🤖 JARVIS — Autonomous Multi-Agent AI System
 
 ![Status](https://img.shields.io/badge/status-active-success)
-![Python](https://img.shields.io/badge/python-3.10+-blue)
+![Python](https://img.shields.io/badge/python-3.14-blue)
 ![Architecture](https://img.shields.io/badge/architecture-multi--agent-purple)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -165,7 +165,10 @@ Triggers:
  
 Follow these steps to synchronize JARVIS with your system:
  
-### 1. 📂 File Setup
+### 0. 🐍 Python Environment
+- **Developed & Tested on**: Python 3.14
+- **Compatibility**: Supports Python 3.10 and newer.
+
 
 ```bash
 git clone https://github.com/rishaadj/JARVIS.git
