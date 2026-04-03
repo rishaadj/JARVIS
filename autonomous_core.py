@@ -376,6 +376,10 @@ Supported skills:
                         is_uncensored = (self.active_provider == "uncensored")
                         response = self.chat.send_message(prompt, uncensored=is_uncensored, forced_provider=self.active_provider)
                         
+                        if not response or not hasattr(response, 'text'):
+                            self.log("Brain returned an empty or invalid response.", "error")
+                            return
+
                         action_text = response.text.strip()
                         for line in action_text.splitlines():
                             if "ACTION:" in line.upper():
@@ -415,6 +419,9 @@ Supported skills:
                                 img = Image.open(img_path)
                                 is_uncensored = (self.active_provider == "uncensored")
                                 vision_res = self.chat.send_message([f"Analyze screen for: {t_data}", img], uncensored=is_uncensored, forced_provider=self.active_provider)
+                                if not vision_res or not hasattr(vision_res, 'text'):
+                                    self._emit_jarvis_message("I'm sorry Sir, I couldn't analyze the screen.")
+                                    return
                                 final_text = vision_res.text
                                 self._emit_jarvis_message(final_text)
                                 self.executor_agent.execute_skill("speak", {"text": final_text})
@@ -468,6 +475,11 @@ Supported skills:
                                 img = Image.open(img_path)
                                 is_uncensored = (self.active_provider == "uncensored")
                                 vision_res = self.chat.send_message([f"Analyze screen for: {self.active_goal}", img], uncensored=is_uncensored, forced_provider=self.active_provider)
+                                if not vision_res or not hasattr(vision_res, 'text'):
+                                    err_msg = "Visual analysis failed."
+                                    self._emit_jarvis_message(err_msg)
+                                    self._post_action_evaluate(t_data, err_msg)
+                                    return
                                 self._emit_jarvis_message(vision_res.text)
                                 self.executor_agent.execute_skill("speak", {"text": vision_res.text})
                                 self._post_action_evaluate(t_data, str(vision_res.text))
@@ -526,9 +538,10 @@ Supported skills:
             def _compress_worker():
                 self.log("Background memory compression initiated...", "system")
                 try:
-                    summary_prompt = f"Summarize this conversation concisely in 2 sentences:\n{history}"
-                    summary = self.chat.send_message(summary_prompt).text
-                    self.context_buffer.appendleft(f"[Past Context Summary]: {summary}")
+                    summary_res = self.chat.send_message(summary_prompt)
+                    if summary_res and hasattr(summary_res, 'text'):
+                        summary = summary_res.text
+                        self.context_buffer.appendleft(f"[Past Context Summary]: {summary}")
                 except Exception as e:
                     self.log(f"Memory Compression Error: {e}", "error")
             

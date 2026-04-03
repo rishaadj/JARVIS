@@ -41,13 +41,24 @@ class SemanticMemory:
             
             client = genai.Client(api_key=first_key)
             result = client.models.embed_content(
-                model="text-embedding-004",
+                model="gemini-embedding-001",
                 contents=text
             )
             # Extracted vector based on new SDK schema
             return np.array(result.embeddings[0].values)
         except Exception as e:
-            print(f"[SEMANTIC MEMORY] Embedding Error: {e}")
+            if "text-embedding-004" in str(e):
+                print(f"[SEMANTIC MEMORY] text-embedding-004 failed, trying fallback...")
+                try:
+                    result = client.models.embed_content(
+                        model="gemini-embedding-001",
+                        contents=text
+                    )
+                    return np.array(result.embeddings[0].values)
+                except Exception as e2:
+                    print(f"[SEMANTIC MEMORY] Fallback Embedding Error: {e2}")
+            else:
+                print(f"[SEMANTIC MEMORY] Embedding Error: {e}")
             return None
 
     def store(self, text, metadata=None):

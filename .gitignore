@@ -13,3 +13,4 @@ __pycache__/
 venv/
 .vscode/
 node_modules/
+semantic_index.json

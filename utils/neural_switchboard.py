@@ -12,7 +12,7 @@ class NeuralSwitchboard:
     """The Multi-Provider Brain of JARVIS. Failover order: Gemini -> Groq -> Ollama."""
     
     def __init__(self, gemini_api_keys: str, gemini_model: str, 
-                 groq_api_key: str = None, groq_model: str = "llama-3.2-11b-vision-preview",
+                 groq_api_key: str = None, groq_model: str = "llama-3.3-70b-versatile",
                  ollama_model: str = "llama3.2-vision",
                  ollama_uncensored_model: str = "dolphin-llama3"):
         
@@ -130,15 +130,19 @@ class NeuralSwitchboard:
         # 🔓 FORCE SPECIFIC PROVIDER (from HUD)
         if forced_provider and forced_provider != 'auto':
             if forced_provider == 'uncensored':
-                return self._try_ollama(contents, use_uncensored=True)
+                res = self._try_ollama(contents, use_uncensored=True)
+                if res: return res
             elif forced_provider == 'ollama':
-                return self._try_ollama(contents, use_uncensored=False)
+                res = self._try_ollama(contents, use_uncensored=False)
+                if res: return res
             elif forced_provider == 'groq':
                 print(f"[SWITCHBOARD] Forced Provider: Groq")
-                return self._send_groq(contents)
+                res = self._send_groq(contents)
+                if res: return res
             elif forced_provider == 'gemini':
                 print(f"[SWITCHBOARD] Forced Provider: Gemini")
-                return self._send_gemini(contents)
+                res = self._send_gemini(contents)
+                if res: return res
 
         # 🔓 FORCE UNCENSORED MODE (Legacy flag support)
         if uncensored:
@@ -163,6 +167,8 @@ class NeuralSwitchboard:
         res = self._try_ollama(contents, use_uncensored=True)
         if res: return res
 
+
+        # --- IF EVERYTHING FAILED (including forced providers) ---
         return type("Err", (), {"text": "Sir, all neural systems (Online, Offline, and Uncensored) are currently unavailable."})()
 
     def _try_ollama(self, contents, use_uncensored=False):
