@@ -370,6 +370,7 @@ PROACTIVE STRATEGY:
                             self.log("Brain returned an empty or invalid response.", "error")
                             return
 
+                        action_text = response.text.strip()
                         actions = []
                         for line in action_text.splitlines():
                             if "ACTION:" in line.upper():
