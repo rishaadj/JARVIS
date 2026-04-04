@@ -98,7 +98,7 @@ cd JARVIS
 pip install -r requirements.txt
 ```
 
-Copy `.env.example` to `.env` and fill in your keys:
+To configure JARVIS, you'll need to set up your environment variables. Simply create a copy of the `.env.example` file and rename it to `.env` (or just remove the `.example` extension). Then, open your new `.env` file and replace the placeholder values with your actual API keys and preferences.
 
 ```bash
 cp .env.example .env
