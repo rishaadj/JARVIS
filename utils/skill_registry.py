@@ -86,20 +86,23 @@ SKILL_REGISTRY = {
     "mouse_control": {
         "desc": "Control the mouse cursor.",
         "params": {"action": "string", "x": "integer", "y": "integer"},
-        "risk": 1
+        "risk": 0
     },
     "keyboard_control": {
         "desc": "Simulate keyboard input.",
         "params": {"action": "string", "text": "string", "key": "string"},
-        "risk": 1
+        "risk": 0
     },
 }
 
 def get_skill_list_prompt():
-    """Generates a human-readable skill list for AI system prompts."""
+    """Generates a human-readable skill list for AI system prompts. 
+    Escapes braces to avoid KeyError during string formatting."""
     lines = []
     for name, data in SKILL_REGISTRY.items():
-        lines.append(f"- {name}: {data['desc']} | Params: {data['params']}")
+        # Convert params dict to escaped string
+        params_str = str(data['params']).replace("{", "{{").replace("}", "}}")
+        lines.append(f"- {name}: {data['desc']} | Params: {params_str}")
     return "\n".join(lines)
 
 def get_param_contract():

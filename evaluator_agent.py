@@ -9,18 +9,22 @@ You are the EVALUATOR agent of JARVIS.
 Goal:
 {goal}
 
-Last Action:
+Last Action Attempted:
 {last_action}
 
-Result:
+Result of Action:
 {result}
 
 Decide:
-- Was this successful?
+1. Was this successful? (Did it move us closer to the goal?)
+2. If it FAILED (errors, app not found, etc.), what is the next logical step to fix it?
+   - If an app is missing, suggest 'web_search' or 'research'.
+   - If a file is missing, suggest 'list_files'.
+   - If a command failed, suggest researching the error.
 
 Respond ONLY:
 STATUS: success / fail
-SUGGESTION: <next action in the same format as the planner/executor uses, e.g. "<skill_name>: {{...}}" or "ACTION: <skill_name>: {{...}}" or "none">
+SUGGESTION: <next action in the same format: "ACTION: <skill_name>: {{...}}" or "none">
 """
 
         try:

@@ -6,10 +6,11 @@ from PIL import Image
 from datetime import datetime
 
 class VisualObserver:
-    def __init__(self, chat_obj, socketio_obj=None, scan_interval=600):
+    def __init__(self, chat_obj, socketio_obj=None, scan_interval=600, memory_obj=None):
         self.chat = chat_obj
         self.socketio = socketio_obj
         self.scan_interval = scan_interval
+        self.memory = memory_obj
         self.active = False
         self.visual_context = "System starting... No visual data yet."
         self.last_screenshot_path = None
@@ -67,6 +68,11 @@ class VisualObserver:
             self.visual_context = response.text.strip()
             
             self._emit_update(self.visual_context, f"/screenshots/{os.path.basename(filepath)}")
+            
+            # --- PASSIVE LEARNING ---
+            if self.memory:
+                self.memory.store_semantic(f"Visual Scan: {self.visual_context}", {"type": "vision_awareness", "window": w_title})
+            
             self._cleanup_screenshots()
             
             return self.visual_context

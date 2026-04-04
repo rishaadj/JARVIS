@@ -48,7 +48,7 @@ class AutonomousCore:
         self.synthesis_engine = SkillSynthesisEngine(self.chat, self.executor_agent)
 
         # 👁️ Visual Awareness (Milestone 1)
-        self.visual_observer = VisualObserver(self.chat, self.socketio)
+        self.visual_observer = VisualObserver(self.chat, self.socketio, memory_obj=self.memory)
         self.visual_observer.start()
 
         # 🛡️ Proactive Autonomy (Milestone 3)
@@ -370,13 +370,12 @@ PROACTIVE STRATEGY:
                             self.log("Brain returned an empty or invalid response.", "error")
                             return
 
-                        action_text = response.text.strip()
+                        actions = []
                         for line in action_text.splitlines():
                             if "ACTION:" in line.upper():
-                                action_text = line.strip()
-                                break
+                                actions.append(line.strip())
                 
-                        if "ACTION:" not in action_text.upper():
+                        if not actions:
                             final_text = action_text
                             self._emit_jarvis_message(final_text)
                             self.executor_agent.execute_skill("speak", {"text": final_text})
@@ -386,49 +385,45 @@ PROACTIVE STRATEGY:
                             self.memory.store_semantic(f"User asked: {t_data}. JARVIS responded: {final_text}", {"type": "conversation"})
                             return
 
-                        skill_name, params = self.executor_agent.parse_task(action_text)
-                        if not skill_name or skill_name in {"none", "null", "idle"}:
-                            return
-                
-                        self.state["last_action"] = {"skill": skill_name, "params": params}
-                        self.context_buffer.append(f"User: {t_data} | JARVIS: {action_text}")
-                        self._compress_memory_if_needed()
-
-                        # UI Confirmation Gating
-                        if (not self.allow_dangerous) and (skill_name in self.dangerous_skills):
-                            self.pending_confirmation = {"skill_name": skill_name, "params": params, "action_text": action_text}
-                            self._emit_jarvis_message(f"Security Alert: `{action_text}` requires confirmation.")
-                            return
-
-                        if skill_name == "vision":
-                            # Vision logic remains similar
-                            self._set_action()
-                            result = self.executor_agent.execute_skill("vision", self._inject_socketio(params))
-                            if isinstance(result, str) and "SCREENSHOT_SAVED" in result:
-                                img_path = os.path.abspath(result.split(":", 1)[-1].strip())
-                                img = Image.open(img_path)
-                                is_uncensored = (self.active_provider == "uncensored")
-                                vision_res = self.chat.send_message([f"Analyze screen for: {t_data}", img], uncensored=is_uncensored, forced_provider=self.active_provider)
-                                if not vision_res or not hasattr(vision_res, 'text'):
-                                    self._emit_jarvis_message("I'm sorry Sir, I couldn't analyze the screen.")
-                                    return
-                                final_text = vision_res.text
-                                self._emit_jarvis_message(final_text)
-                                self.executor_agent.execute_skill("speak", {"text": final_text})
-                                self._post_action_evaluate(action_text, str(final_text))
+                        # Process all actions in sequence
+                        self.context_buffer.append(f"User: {t_data} | JARVIS Actions: {', '.join(actions)}")
+                        
+                        for act in actions:
+                            skill_name, params = self.executor_agent.parse_task(act)
+                            if not skill_name or skill_name in {"none", "null", "idle"}:
+                                continue
+                    
+                            self.state["last_action"] = {"skill": skill_name, "params": params}
+                            
+                            # UI Confirmation Gating
+                            if (not self.allow_dangerous) and (skill_name in self.dangerous_skills):
+                                self.pending_confirmation = {"skill_name": skill_name, "params": params, "action_text": act}
+                                self._emit_jarvis_message(f"Security Alert: `{act}` requires confirmation.")
                                 return
-                            self._emit_jarvis_message(str(result))
-                            return
 
-                        self._set_action()
-                        result = self.executor_agent.execute_skill(skill_name, self._inject_context(params))
-                        if result is not None:
-                            self._emit_jarvis_message(str(result))
+                            if skill_name == "vision":
+                                self._set_action()
+                                result = self.executor_agent.execute_skill("vision", self._inject_context(params))
+                                if isinstance(result, str) and "SCREENSHOT_SAVED" in result:
+                                    img_path = os.path.abspath(result.split(":", 1)[-1].strip())
+                                    img = Image.open(img_path)
+                                    is_uncensored = (self.active_provider == "uncensored")
+                                    vision_res = self.chat.send_message([f"Analyze screen for: {t_data}", img], uncensored=is_uncensored, forced_provider=self.active_provider)
+                                    if vision_res and hasattr(vision_res, 'text'):
+                                        final_text = vision_res.text
+                                        self._emit_jarvis_message(final_text)
+                                        self.executor_agent.execute_skill("speak", {"text": final_text})
+                                        self._post_action_evaluate(act, str(final_text))
+                                continue
+
+                            self._set_action()
+                            result = self.executor_agent.execute_skill(skill_name, self._inject_context(params))
+                            if result is not None:
+                                self._emit_jarvis_message(f"[{skill_name}]: {result}")
+                            
+                            self._post_action_evaluate(act, str(result))
                         
-                        # --- OPTIMIZATION: Check for compression in background ---
                         self._compress_memory_if_needed()
-                        
-                        self._post_action_evaluate(action_text, str(result))
                     
                     except QuotaExceededError as e:
                         self.log("CRITICAL: ALL API KEYS EXHAUSTED. Initiating 10-minute hibernation.", "brain")
