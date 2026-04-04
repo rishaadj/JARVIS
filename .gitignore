@@ -14,3 +14,4 @@ venv/
 .vscode/
 node_modules/
 semantic_index.json
+jarvis_memory.json
