@@ -27,7 +27,15 @@ def execute(params):
         
         if matches:
             results = "\n".join(matches)
-            return f"Sir, I found {len(matches)} relevant record(s) in my memory:\n\n{results}"
+            # Add semantic results for more breadth
+            memory_manager = params.get("_memory")
+            if memory_manager:
+                sem_results = memory_manager.search_semantic(query, top_k=2)
+                if sem_results:
+                    sem_text = "\n".join([f"- {m['text']}" for _, m in sem_results])
+                    results += f"\n\nSemantic Matches:\n{sem_text}"
+            
+            return f"Sir, I found {len(matches)} relevant record(s) and semantic matches:\n\n{results}"
         
         return f"Sir, I couldn't find anything specifically about '{key}'."
     else:

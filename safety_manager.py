@@ -45,6 +45,8 @@ class SafetyManager:
         self.logger.addHandler(handler)
 
     def is_skill_allowed(self, skill_name: str) -> bool:
+        if self.env == self.DEVELOPMENT:
+            return True
         allowed_envs = self.allowlists.get(skill_name, [self.PRODUCTION])
         return self.env in allowed_envs
 

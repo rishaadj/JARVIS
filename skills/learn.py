@@ -26,4 +26,9 @@ def execute(params):
     with open(MEMORY_FILE, 'w') as f:
         json.dump(memory, f, indent=4)
     
+    # Dual-store: also update semantic memory if available
+    memory_manager = params.get("_memory")
+    if memory_manager:
+        memory_manager.store_semantic(f"Learned fact about {key}: {fact}", {"type": "user_fact", "key": key})
+    
     return f"Sir, I have committed that to memory under '{key}'."

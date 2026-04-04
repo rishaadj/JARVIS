@@ -15,6 +15,17 @@ def execute(params):
 
     try:
         if system == "Windows":
+            # Handle common aliases
+            if "email" in app_name or "mail" in app_name:
+                # Use mailto: protocol to open default mail client
+                subprocess.Popen(["cmd", "/c", "start", "mailto:"], shell=False)
+                return "Opening your default email client, Sir."
+            
+            if "browser" in app_name or "internet" in app_name:
+                # Open default browser
+                subprocess.Popen(["cmd", "/c", "start", "https://www.google.com"], shell=False)
+                return "Opening your web browser."
+
             # `start` is a cmd.exe internal command; invoke cmd explicitly for reliability.
             # The empty string after `start` is the window title parameter.
             subprocess.Popen(["cmd", "/c", "start", "", app_name], shell=False)

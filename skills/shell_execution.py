@@ -5,6 +5,16 @@ def execute(params):
     if not command:
         return "Sir, please provide a command to execute."
 
+    import platform
+    if platform.system() == "Windows":
+        # Handle common Linux-style commands by translating them to Windows equivalents
+        if command.startswith("top") or "ps" in command:
+            command = "tasklist"
+        elif "ls " in command or command == "ls":
+            command = command.replace("ls", "dir")
+        elif "grep" in command:
+            command = command.replace("grep", "findstr")
+
     try:
         # Run command and capture output
         result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=30)

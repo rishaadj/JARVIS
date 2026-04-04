@@ -23,6 +23,7 @@ from visual_observer import VisualObserver
 from system_sentinel import SystemSentinel
 from gesture_engine import GestureEngine
 from utils.gemini_rotator import QuotaExceededError
+from utils.skill_registry import SKILL_REGISTRY, get_skill_list_prompt
 
 class AutonomousCore:
     def __init__(self, run_skill_fn, system_monitor_fn, chat_obj, socketio_obj=None):
@@ -89,47 +90,31 @@ class AutonomousCore:
         self.allow_dangerous = allow_env in {"1", "true", "yes", "y", "on"}
         
         # High-risk skills that always trigger a UI confirmation if not in high-trust mode.
-        self.dangerous_skills = {
-            "shell_execution",
-            "run_script",
-            "create_skill",
-            "synthesize_skill",
-            "mouse_control",
-            "keyboard_control",
-            "file_management",
-            "file_watcher",
-            "send_whatsapp_message",
-            "email_sender",
-        }
+        # Pull from Registry where risk == 1
+        self.dangerous_skills = {name for name, data in SKILL_REGISTRY.items() if data.get("risk", 0) == 1}
+        
         self.pending_confirmation: dict | None = None
 
         # --- CORE PROMPT SYSTEM ---
-        self.CORE_SYSTEM_PROMPT = """
+        self.CORE_SYSTEM_PROMPT = f"""
 You are JARVIS, a highly advanced AI system. 
-Recent Context: {context_snapshot}
-Visual Awareness (Last Scan): {v_ctx}
+Recent Context: {{context_snapshot}}
+Visual Awareness (Last Scan): {{v_ctx}}
 Relevant Past Experiences:
-{past_memories}
+{{past_memories}}
 
-User said: "{user_input}"
+User said: "{{user_input}}"
 
 Decide the next logical action. Respond ONLY as one single line in the following format:
 ACTION: <skill_name>: <json_params>
 
-The params must be a valid JSON object.
-
 Supported skills:
-- open_app: {{"text": "<app name>"}}
-- vision: {{}}
-- speak: {{"text": "<what to say>"}}
-- web_search: {{"query": "<search query>"}}
-- research: {{"topic": "<topic>"}}
-- synthesize_skill: {{"skill_name": "<name>", "description": "<desc>", "requirements": "<reqs>"}}
-- shell_execution: {{"command": "<shell command>"}}
-- list_files: {{"path": "<path>"}}
-- screen_capture: {{}}
-- learn: {{"key":"<key>","fact":"<fact>"}}
-- recall_memory: {{"key":"<key>"}}
+{get_skill_list_prompt()}
+
+PROACTIVE STRATEGY:
+1. Prefer direct skills (like 'email_sender' or 'web_search') over opening an app and waiting.
+2. If the user's intent is clear (e.g. 'tell me the time' or 'send mail'), do it DIRECTLY. 
+3. Only use 'open_app' if the user explicitly asks to 'open' something for them to use manually.
 """
 
     def run_skill(self, skill_name, params):
@@ -171,12 +156,13 @@ Supported skills:
         """Sets the manual override for the AI provider (Gemini, Groq, etc.)"""
         self.active_provider = provider
 
-    def _inject_socketio(self, params: dict) -> dict:
-        """Inject Socket.IO into tool params for background skills."""
-        if not self.socketio:
-            return params
+    def _inject_context(self, params: dict) -> dict:
+        """Inject system context (Socket.IO, Memory) into tool params for background skills."""
         p = dict(params or {})
-        p["_socketio"] = self.socketio
+        if self.socketio:
+            p["_socketio"] = self.socketio
+        if self.memory:
+            p["_memory"] = self.memory
         return p
 
     def log(self, message, type="info"):
@@ -309,7 +295,7 @@ Supported skills:
                             self._emit_jarvis_message(f"Confirmed. Executing: {action_text}")
                             self._set_busy(True)
                             self._set_action()
-                            result = self.executor_agent.execute_skill(skill_name, self._inject_socketio(params))
+                            result = self.executor_agent.execute_skill(skill_name, self._inject_context(params))
                             if result is not None:
                                 self._emit_jarvis_message(str(result))
                             self._set_busy(False)
@@ -358,11 +344,15 @@ Supported skills:
                 
                     context_snapshot = "\n".join(list(self.context_buffer))
             
-                    # 🧠 Semantic Recall
-                    past_memories = ""
+                    # 🧠 Semantic Recall & Persona Facts
+                    personal_context = self.memory.load_memory()
+                    persona_facts = "\n".join([f"- {k}: {v}" for k, v in personal_context.items()])
+                    
+                    past_memories = persona_facts
                     results = self.memory.search_semantic(t_data, top_k=2)
                     if results:
-                        past_memories = "\n".join([f"- {m['text']}" for _, m in results])
+                        sem_memories = "\n".join([f"- {m['text']}" for _, m in results])
+                        past_memories += "\n" + sem_memories
 
                     prompt = self.CORE_SYSTEM_PROMPT.format(
                         context_snapshot=context_snapshot,
@@ -431,7 +421,7 @@ Supported skills:
                             return
 
                         self._set_action()
-                        result = self.executor_agent.execute_skill(skill_name, self._inject_socketio(params))
+                        result = self.executor_agent.execute_skill(skill_name, self._inject_context(params))
                         if result is not None:
                             self._emit_jarvis_message(str(result))
                         
@@ -469,7 +459,7 @@ Supported skills:
 
                         # Vision autonomous logic
                         if skill_name == "vision":
-                            result = self.executor_agent.execute_skill("vision", self._inject_socketio(params))
+                            result = self.executor_agent.execute_skill("vision", self._inject_context(params))
                             if isinstance(result, str) and "SCREENSHOT_SAVED" in result:
                                 img_path = os.path.abspath(result.split(":", 1)[-1].strip())
                                 img = Image.open(img_path)
@@ -487,7 +477,7 @@ Supported skills:
                                 self._emit_jarvis_message(str(result))
                             return
 
-                        result = self.executor_agent.execute_skill(skill_name, self._inject_socketio(params))
+                        result = self.executor_agent.execute_skill(skill_name, self._inject_context(params))
                         if result is not None:
                             self._emit_jarvis_message(str(result))
                         self._post_action_evaluate(t_data, str(result))

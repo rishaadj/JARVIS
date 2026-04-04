@@ -1,3 +1,5 @@
+from utils.skill_registry import get_skill_list_prompt
+
 class PlannerAgent:
     def __init__(self, chat):
         self.chat = chat
@@ -33,25 +35,7 @@ class PlannerAgent:
         - json_params must be a JSON object.
 
         Supported skills and their params:
-        - open_app: {{"text":"<app name>"}}
-        - vision: {{}}
-        - speak: {{"text":"<what to say>"}}
-        - web_search: {{"query":"<search query>"}}
-        - research: {{"topic":"<topic>"}} # Use for deep investigation or complex info gathering.
-        - synthesize_skill: {{"skill_name":"<name>", "description":"<desc>", "requirements":"<reqs>"}} # Use to expand your own capabilities when a requested action isn't possible with current skills.
-        - shell_execution: {{"command":"<shell command>"}}
-        - list_files: {{"path":"<path>"}}
-        - screen_capture: {{"filename":"<optional filename>"}}
-        - screen_analysis: {{"action":"ocr"|"capture"}}
-        - learn: {{"key":"<key>","fact":"<fact text>"}}
-        - recall_memory: {{"key":"<key>"}}
-        - system_monitor: {{}}
-        - timer: {{"minutes": <int>, "label":"<label>"}}
-        - volume: {{"action":"up"|"down"|"mute"}}
-        - scheduler: {{"action":"schedule","delay_seconds": <int>,"skill_name":"<skill>","params":{{}}, "recurring": false}}
-        - file_management: {{"action":"create_file|delete_file|move_file|rename_file|create_dir","path":"<path>","target":"<target>","content":"<content>"}}
-        - mouse_control: {{"action":"move|click|drag|scroll|position","x":<int>,"y":<int>,"clicks":<int>,"button":"left|right|middle","amount":<int>}}
-        - keyboard_control: {{"action":"type|press|hotkey","text":"<text>","key":"<key>","hotkey":["ctrl","c"]}}
+        {get_skill_list_prompt()}
 
         Strategies:
         1. If a goal requires info you don't have, use `research` first.

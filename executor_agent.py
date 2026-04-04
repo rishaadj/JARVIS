@@ -4,6 +4,7 @@ import os
 import sys
 from typing import Any, Tuple
 
+from utils.skill_registry import SKILL_REGISTRY, get_param_contract
 from safety_manager import safety_manager
 
 class ExecutorAgent:
@@ -15,38 +16,8 @@ class ExecutorAgent:
         if repo_root not in sys.path:
             sys.path.insert(0, repo_root)
 
-        # Minimal param contract for common skills.
-        self.skill_param_contract: dict[str, dict[str, Any]] = {
-            "open_app": {"required": {"text": str}},
-            "speak": {"required": {"text": str}},
-            "vision": {"required": {}},
-            "web_search": {"required": {"query": str}},
-            "shell_execution": {"required": {"command": str}},
-            "list_files": {"required": {}},
-            "screen_capture": {"required": {}},
-            "screen_analysis": {"required": {"action": str}, "enum": {"action": {"ocr", "capture"}}},
-            "learn": {"required": {"key": str, "fact": str}},
-            "recall_memory": {"required": {}},
-            "system_monitor": {"required": {}},
-            "timer": {"required": {}, "coerce": {"minutes": int}},
-            "volume": {"required": {"action": str}, "enum": {"action": {"up", "down", "mute"}}},
-            "research": {"required": {"topic": str}},
-            "synthesize_skill": {"required": {"skill_name": str, "description": str, "requirements": str}},
-
-            # Background / side-effect tools.
-            "scheduler": {
-                "required": {"action": str, "delay_seconds": int, "skill_name": str, "params": dict, "recurring": bool},
-                "coerce": {"delay_seconds": int, "recurring": bool},
-            },
-            "file_watcher": {"required": {}},
-            "run_script": {"required": {"path": str}},
-            "create_skill": {"required": {"skill_name": str, "code": str}, "optional": {"plan": str}},
-            "mouse_control": {"required": {"action": str}},
-            "keyboard_control": {"required": {"action": str}},
-            "file_management": {"required": {"action": str, "path": str}},
-            "email_sender": {"required": {"to": str, "body": str}},
-            "send_whatsapp_message": {"required": {"phone": str, "message": str}},
-        }
+        # Sync from Centralized Registry.
+        self.skill_param_contract = get_param_contract()
 
     def _coerce_value(self, key: str, value: Any, target_type: type) -> Any:
         if value is None:
