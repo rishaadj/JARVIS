@@ -368,3 +368,73 @@ function emergencyHalt() {
         hapticFeedback(200);
     }
 }
+
+// =============================================================
+//  8. IMAGE DRAG & DROP — Visual Analysis
+// =============================================================
+(function initImageDrop() {
+    const dropZone = document.getElementById('drop-zone');
+    const dropOverlay = document.getElementById('drop-overlay');
+    const observerCtx = document.getElementById('observer-context');
+    const scanImg = document.getElementById('last-scan-img');
+    if (!dropZone) return;
+
+    // Show overlay on drag-enter
+    dropZone.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        dropOverlay.classList.add('active');
+    });
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropOverlay.classList.add('active');
+    });
+    dropZone.addEventListener('dragleave', (e) => {
+        if (!dropZone.contains(e.relatedTarget)) {
+            dropOverlay.classList.remove('active');
+        }
+    });
+
+    dropZone.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        dropOverlay.classList.remove('active');
+
+        const file = e.dataTransfer.files[0];
+        if (!file || !file.type.startsWith('image/')) {
+            addSystemLog('Drop rejected: not an image file.');
+            return;
+        }
+
+        // Preview immediately
+        const localUrl = URL.createObjectURL(file);
+        if (scanImg) { scanImg.src = localUrl; scanImg.style.display = 'block'; }
+
+        // Show scanning state
+        if (observerCtx) observerCtx.textContent = 'SCANNING... Neural optics processing image...';
+        setHUDState('processing');
+        addSystemLog(`Image received: ${file.name} (${(file.size / 1024).toFixed(1)} KB) — dispatching to vision core...`);
+
+        try {
+            const formData = new FormData();
+            formData.append('image', file, file.name);
+
+            const res = await fetch('/api/analyse_image', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await res.json();
+
+            if (data.error) {
+                if (observerCtx) observerCtx.textContent = `Error: ${data.error}`;
+                addSystemLog(`Vision Error: ${data.error}`);
+                setHUDState('idle');
+            }
+            // Success is handled by the socket event ('visual_awareness' + 'new_message')
+            // which main.py broadcasts after analysis completes
+        } catch (err) {
+            if (observerCtx) observerCtx.textContent = `Network Error: ${err.message}`;
+            addSystemLog(`Image upload failed: ${err.message}`);
+            setHUDState('idle');
+        }
+    });
+})();

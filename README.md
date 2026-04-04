@@ -1,247 +1,209 @@
-# 🤖 JARVIS — Autonomous Multi-Agent AI System
+# 🤖 JARVIS — I built my own AI assistant that actually runs on my PC
 
 ![Status](https://img.shields.io/badge/status-active-success)
-![Python](https://img.shields.io/badge/python-3.14-blue)
+![Python](https://img.shields.io/badge/python-3.10+-blue)
 ![Architecture](https://img.shields.io/badge/architecture-multi--agent-purple)
 ![License](https://img.shields.io/badge/license-MIT-green)
+![Free](https://img.shields.io/badge/cost-100%25%20free-brightgreen)
 
-> A Stark-inspired AI system built for autonomy, control, and evolution.
-
----
-
-## 🧠 Overview
-
-JARVIS is a multi-agent autonomous AI system designed to:
-
-- Execute complex tasks  
-- Control your system  
-- Learn and evolve by generating new capabilities  
-
-This is not a chatbot — it’s a coordinated AI architecture.
+> It can open apps, send emails, search the web, control your mouse/keyboard, analyse your screen, send WhatsApp messages, run shell commands, and synthesise new skills on its own — all from voice or text. Inspired by Tony Stark's JARVIS.
 
 ---
 
-## 🧩 Architecture
+## 🎥 What it looks like
 
-```mermaid
-graph TD
-    User --> Voice
-    Voice --> Core
-    Core --> Planner
-    Core --> Executor
-    Core --> Monitor
-    Core --> Evaluator
-    Executor --> Skills
-    Core --> Memory
-    Memory --> Core
+The HUD is a real-time Heads-Up Display that runs in your browser. It shows:
+- **Live system telemetry** (CPU, RAM, battery)
+- **Neural state** (thinking / executing / speaking)
+- **A full conversation transcript**
+- **Visual awareness feed** (what JARVIS last looked at)
+- **Multi-brain selector** to switch AI providers on the fly
+
+---
+
+## 🧠 How it works
+
+JARVIS is not a chatbot wrapper. It's a **multi-agent autonomous system**:
+
+```
+You speak / type
+      ↓
+Autonomous Core (decides what to do)
+      ↓
+Planner → Executor → Skills
+      ↓
+Memory ← Evaluator (was it right?)
 ```
 
----
-
-## ⚙️ Core Components
-
-### 🔹 Entry Layer
-- `main.py`  
-  Initializes:
-  - Voice system (Vosk)
-  - Flask + SocketIO server
-  - Autonomous core  
+Every response goes through a full agent loop: plan → execute → evaluate → remember.
 
 ---
 
-### 🧠 Autonomous Core
-- `autonomous_core.py`
-  - Coordinates all agents  
-  - Handles full task lifecycle  
+## 🛰️ The "Neural Switchboard" — 100% Free, 100% Uptime
+
+JARVIS never goes offline because it has four AI "brains" in a failover chain:
+
+| Priority | Provider | Why |
+|---|---|---|
+| 1st | **Google Gemini 2.5 Flash Lite** | Native vision, 1.5M context, free tier |
+| 2nd | **Groq Cloud (Llama 3.2 Vision)** | 800+ tokens/sec, free tier |
+| 3rd | **Ollama (Local Llama 3.2)** | 100% offline, private |
+| 4th | **Ollama Dolphin** | Uncensored, unrestricted local model |
+
+If Gemini hits a rate limit → automatic switch to Groq → if offline → Ollama. You never notice.
+
+> You can also manually force any brain from the HUD sidebar. The Arc Reactor changes colour (Blue/Gold/Green/Pink) to show which brain is active.
 
 ---
 
-## 🤖 Multi-Agent System
+## ⚡ What it can do
 
-| Agent     | Role                        |
-|----------|-----------------------------|
-| Planner  | Breaks tasks into steps     |
-| Executor | Executes actions            |
-| Monitor  | Tracks system & execution   |
-| Evaluator| Validates outcomes          |
+### 💬 Communication
+- Send emails (Gmail SMTP)
+- Send WhatsApp messages (browser automation or Twilio API)
 
----
+### 💻 PC Control  
+- Open any application
+- Control mouse & keyboard
+- Run shell commands
+- File management
 
-## 🛰️ Neural Switchboard (Multi-Provider)
+### 🔍 Intelligence
+- Web search & research
+- Screen analysis (takes a screenshot, tells you what's on it)
+- **Drag & drop any image** onto the HUD for instant AI analysis
+- Long-term semantic memory (remembers things across sessions)
 
-JARVIS is now powered by a **Neural Switchboard** architecture that ensures 100% uptime with no costs:
-
-1.  **Primary:** Google Gemini (2.5 Flash Lite) - Native Vision & 1.5M Context.
-2.  **Fallback 1:** [Groq Cloud](https://console.groq.com/) - Blazing fast Llama 3.2 Vision (800+ tokens/sec).
-3.  **Fallback 2:** [Ollama](https://ollama.com/) - 100% Offline privacy with Llama 3.2.
-4.  **Final Resort (Unfiltered):** Ollama Dolphin - A completely uncensored reasoning model for unrestricted control.
-
-If Gemini hits a 429 quota limit, JARVIS automatically fails over to Groq. If offline, he switches to Ollama.
- 
-> [!TIP]
-> **Manual Override:** You can manually switch between these "Brains" via the Neural Bridge selector in the HUD sidebar. The Arc Reactor will change colors (Blue, Gold, Green, Pink) to show which brain is active.
-
----
-
-## 🧬 Self-Evolving System
-
-- `coder_agent.py`
-- `skill_synthesis_engine.py`
-
-JARVIS can:
-- Generate new Python skills  
-- Test and integrate them  
-- Expand its own functionality  
-
----
-
-## 🧠 Memory System
-
-- `semantic_memory.py` → Long-term knowledge  
-- `conversation_log.json` → Context tracking  
-- `topology_engine.py` → 3D knowledge graph  
-
----
-
-## 👁️ Sensory Systems
+### 🤖 Self-Evolution
+- Generates new Python skills when it doesn't know how to do something
+- Tests and integrates them automatically
 
 ### 🎤 Voice
-- Vosk (offline speech recognition)  
-- Edge-TTS (neural voice output)  
-
-### 👀 Vision *(WIP)*
-- `visual_observer.py`  
-- `gesture_engine.py`  
+- Offline speech recognition via Vosk (no cloud, no latency)
+- Neural voice output via Edge-TTS (sounds human)
+- Smart barge-in: say "stop" or "cancel" to interrupt mid-sentence
 
 ---
 
-## 🖥️ Interface
+## 🚀 Setup (5 minutes)
 
-- **HUD (`index.html`)**
-  - Real-time dashboard  
-  - Chat + telemetry  
-
-- **Holographic Lab (`lab.html`)**
-  - 3D system visualization  
-
----
-
-## 🛠️ Capabilities
-
-### 💻 PC Control
-- Mouse / keyboard control  
-- App launching  
-- Shell execution  
-
-### 🌐 Communication
-- WhatsApp messaging  
-- Email sending  
-
-### ⚙️ System
-- Monitoring  
-- Scheduling  
-- File management  
-
-### 🔍 Research
-- Web search  
-- Screen analysis  
-
----
-
-## ⚡ Protocol System
-
-```bash
-"JARVIS, initiate house party protocol"
-```
-
-Triggers:
-- Multi-agent coordination  
-- Parallel execution  
-- System-wide actions  
-
----
-
-## 🚀 Installation & Setup
- 
-Follow these steps to synchronize JARVIS with your system:
- 
-### 0. 🐍 Python Environment
-- **Developed & Tested on**: Python 3.14
-- **Compatibility**: Supports Python 3.10 and newer.
-
+### Requirements
+- Python 3.10+
+- A free [Google AI Studio](https://aistudio.google.com) key (Gemini)
+- Optionally: [Groq](https://console.groq.com) key, [Ollama](https://ollama.com)
 
 ```bash
 git clone https://github.com/rishaadj/JARVIS.git
 cd JARVIS
 pip install -r requirements.txt
+```
 
-# --- MULTI-PROVIDER BRAIN ---
-# 1. Get free Gemini keys at aistudio.google.com
-# 2. Get free Groq API Keys at console.groq.com
-# 3. Download Ollama at https://ollama.com/download
-#    - Run: ollama pull llama3.2-vision
-#    - Run: ollama pull dolphin-llama3
+Copy `.env.example` to `.env` and fill in your keys:
 
-# Download the High-Accuracy Vosk Voice Recognition model (~1GB)
+```bash
+cp .env.example .env
+```
+
+Download the voice recognition model:
+```bash
 python setup_indian_vosk.py
+```
 
+Run it:
+```bash
 python main.py
 ```
- 
+
+Open your browser at `http://localhost:5000` — that's the HUD.
+
 ---
- 
+
+## 🔧 Configuration (`.env`)
+
+```env
+# AI Brains (at least one required)
+GEMINI_API_KEYS=key1,key2,key3   # Comma-separate multiple for rotation
+GROQ_API_KEY=your_groq_key
+
+# Email (optional)
+EMAIL_USER=your_gmail@gmail.com
+EMAIL_PASS=your_app_password       # Gmail App Password, not your real password
+
+# WhatsApp via Twilio (optional — falls back to browser if not set)
+TWILIO_SID=your_sid
+TWILIO_AUTH_TOKEN=your_token
+TWILIO_WHATSAPP_FROM=+14155238886
+
+# Security
+JARVIS_PIN=1234                    # PIN for remote HUD access
+```
+
+---
+
 ## 🔒 Privacy & Security
- 
-By default, JARVIS is configured to keep your data local and private. The following are **ignored** by version control (`.gitignore` to prevent leaking private data or large model files):
-- `.env` (API keys)
-- `.ollama/` (Local model weights)
-- `screenshots/` (Visual context history)
-- `memory.json` (Long-term semantic memory)
-- `conversation_log.json` (Transcript history)
-- `vosk-model-*/` (Large voice recognition models)
+
+All processing is local by default:
+- `.env` — never committed (API keys stay on your machine)
+- `screenshots/` — local only
+- `memory.json` / `conversation_log.json` — local only
+- Voice recognition runs fully offline via Vosk
 
 ---
 
-## 📊 Project Status
+## 📊 Current Status
 
-| Feature             | Status        |
-|--------------------|--------------|
-| Multi-Agent System | ✅ Complete   |
-| Autonomous Core    | ✅ Complete   |
-| Neural Switchboard | ✅ Complete   |
-| Uncensored Mode    | ✅ Complete   |
-| Vision System      | ✅ Complete   |
-| Gesture Mastery    | 🚧 In Progress |
-
----
-
-## 🔮 Roadmap
-
-- [ ] Advanced reasoning (LLMs)  
-- [ ] Full autonomy  
-- [ ] Cross-device control  
-- [ ] Real-time learning  
-- [ ] Advanced UI  
+| Feature | Status |
+|---|---|
+| Multi-Agent Autonomous Core | ✅ |
+| Neural Switchboard (4 providers) | ✅ |
+| Voice In + Voice Out | ✅ |
+| Email & WhatsApp | ✅ |
+| Screen Vision | ✅ |
+| Image Drag & Drop Analysis | ✅ |
+| Self-Evolving Skill Synthesis | ✅ |
+| Gesture Control | 🚧 In Progress |
 
 ---
 
-## 🧠 Philosophy
+## 🧩 Architecture
 
-JARVIS is built on:
-- Modularity  
-- Autonomy  
-- Evolution  
-- Control  
+```
+main.py
+├── Flask + SocketIO (HUD server)
+├── Vosk (voice recognition)
+└── AutonomousCore
+    ├── PlannerAgent      — breaks goals into steps
+    ├── ExecutorAgent     — runs skills
+    ├── MonitorAgent      — tracks system health
+    ├── EvaluatorAgent    — validates outcomes
+    ├── GoalAgent         — generates autonomous goals
+    ├── MemoryManager     — semantic long-term memory
+    ├── VisualObserver    — passive screen awareness
+    └── skills/           — 27 plug-and-play Python modules
+```
+
+---
+
+## ❓ FAQ
+
+**Q: Does this cost anything?**  
+A: No. Gemini and Groq both have generous free tiers. Ollama is completely free and local.
+
+**Q: Does it always listen to my microphone?**  
+A: Yes, but voice recognition runs fully offline via Vosk — nothing is sent to a server.
+
+**Q: Can I add my own skills?**  
+A: Yes. Drop a Python file with an `execute(params)` function into the `skills/` folder. JARVIS picks it up automatically.
+
+**Q: Is this the movie JARVIS?**  
+A: No, but it tries its best. Not affiliated with Marvel.
 
 ---
 
 ## ⚠️ Disclaimer
 
-Educational and experimental project.  
-Not affiliated with Marvel.
+This is an educational and experimental project. Use responsibly. The shell execution and file management skills operate within a sandboxed safety policy — review `safety_manager.py` before deploying.
 
 ---
 
-## 🧠 Final Note
-
-> “Sometimes you gotta run before you can walk.” – Tony Stark
+> *"Sometimes you gotta run before you can walk."* — Tony Stark

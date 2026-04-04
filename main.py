@@ -8,7 +8,7 @@ import threading
 import time
 import queue
 import sounddevice as sd
-from flask import Flask, render_template
+from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO
 from vosk import Model, KaldiRecognizer
 
@@ -132,6 +132,54 @@ def lab():
 def api_topology():
     engine = TopologyEngine(os.getcwd())
     return engine.get_topology()
+
+@app.route('/api/analyse_image', methods=['POST'])
+def api_analyse_image():
+    """Accepts a drag-dropped image from the HUD and runs it through JARVIS vision."""
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image provided'}), 400
+
+    file = request.files['image']
+    if not file.filename:
+        return jsonify({'error': 'Empty filename'}), 400
+
+    # Save to screenshots dir
+    if not os.path.exists('screenshots'):
+        os.makedirs('screenshots')
+    from datetime import datetime
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filepath = os.path.abspath(f"screenshots/drop_{timestamp}.png")
+    file.save(filepath)
+
+    if chat_session is None:
+        return jsonify({'error': 'AI brain is offline. Check API keys.'}), 503
+
+    try:
+        from PIL import Image as PILImage
+        img = PILImage.open(filepath)
+        img.thumbnail((1280, 720))
+        img.save(filepath)
+
+        prompt = (
+            "You are JARVIS. The user has dragged and dropped this image for analysis. "
+            "Describe what you see in detail. Identify any text, objects, errors, code, "
+            "graphs, or notable content. Be concise and actionable."
+        )
+        response = chat_session.send_message([prompt, img])
+        result = response.text.strip() if response and hasattr(response, 'text') else "Vision analysis returned no result."
+
+        # Broadcast to HUD
+        socketio.emit('visual_awareness', {
+            'context': result,
+            'image_path': f"/screenshots/{os.path.basename(filepath)}",
+            'timestamp': datetime.now().strftime("%H:%M:%S")
+        })
+        socketio.emit('new_message', {'sender': 'jarvis', 'text': f'[Image Analysis]: {result}'})
+
+        return jsonify({'result': result})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @socketio.on('ui_command')
 def on_ui_command(data):

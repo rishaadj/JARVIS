@@ -107,14 +107,19 @@
                 <!-- Visual Awareness -->
                 <div class="glass-card observer-panel">
                     <div class="card-header">VISUAL_AWARENESS</div>
-                    <div class="scan-container">
+                    <div class="scan-container" id="drop-zone">
                         <div class="scanner"></div>
                         <img id="last-scan-img" src="" alt="" class="scan-img">
+                        <div class="drop-overlay" id="drop-overlay">
+                            <span class="drop-icon">⬇</span>
+                            <span class="drop-label">DROP IMAGE TO ANALYSE</span>
+                        </div>
                     </div>
                     <div id="observer-context" class="observer-text">
-                        Awaiting visual data...
+                        Awaiting visual data... Drop an image above to analyse it.
                     </div>
                 </div>
+
 
                 <!-- Live Data Stream -->
                 <div class="glass-card">
