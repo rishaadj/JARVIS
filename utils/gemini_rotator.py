@@ -9,7 +9,6 @@ class QuotaExceededError(Exception):
 class GeminiRotator:
     """Manages multiple Gemini API keys and automatically rotates on 429 Exhausted."""
     def __init__(self, api_keys_str: str, model: str):
-        # Support comma-separated or space-separated lists, and strip whitespace
         keys = []
         if api_keys_str:
             keys = [k.strip() for k in api_keys_str.replace(',', ' ').split() if k.strip()]
@@ -28,7 +27,7 @@ class GeminiRotator:
         new_key = self.api_keys[self.current_idx]
         print(f"[API ROTATOR] Rate limit hit. Rotating to API Key {self.current_idx + 1}/{len(self.api_keys)}")
         self.client = genai.Client(api_key=new_key)
-        time.sleep(0.5) # Brief backoff delay during rotation
+        time.sleep(0.5)
 
     def send_message(self, contents, **kwargs):
         """
@@ -53,5 +52,4 @@ class GeminiRotator:
                 else:
                     raise e
         
-        # If all keys failed
         raise QuotaExceededError(f"[API ROTATOR] ALL {len(self.api_keys)} API keys evaluated as 429 RESOURCE_EXHAUSTED! Please add more or wait.")

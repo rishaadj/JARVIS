@@ -7,7 +7,6 @@ key = os.getenv("GEMINI_API_KEYS", "").replace(',', ' ').split()[0]
 client = genai.Client(api_key=key)
 
 try:
-    # Try text-embedding-004 first
     result = client.models.embed_content(
         model="text-embedding-004",
         contents="Hello world"
@@ -16,7 +15,6 @@ try:
 except Exception as e:
     print(f"Error 004: {e}")
     try:
-        # Try embedding-001 as fallback
         result = client.models.embed_content(
             model="embedding-001",
             contents="Hello world"

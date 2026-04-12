@@ -32,10 +32,9 @@ class TaskScheduler:
                         task["next_run"] += task["interval"]
                     else:
                         self.tasks.remove(task)
-            time.sleep(30) # Check every 30s
+            time.sleep(30)
 
     def _fire_task(self, task):
-        # Notify the Sentinel instead of putting directly in the queue
         self.on_event_callback(
             event_type="scheduled_task",
             message=f"Scheduled task triggered: {task['name']}",

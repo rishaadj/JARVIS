@@ -6,14 +6,14 @@ def _send_via_twilio(phone, message):
     try:
         from twilio.rest import Client
     except ImportError:
-        return None  # twilio not installed, fall back
+        return None
 
     sid = os.getenv("TWILIO_SID")
     token = os.getenv("TWILIO_AUTH_TOKEN")
     from_number = os.getenv("TWILIO_WHATSAPP_FROM")
 
     if not all([sid, token, from_number]):
-        return None  # credentials missing, fall back
+        return None
 
     try:
         client = Client(sid, token)
@@ -52,8 +52,6 @@ def _send_via_browser(phone, message):
 
     try:
         options = Options()
-        # Use existing Chrome profile so WhatsApp Web stays logged in
-        # This avoids needing to scan the QR code every time
         user_data_dir = os.path.expanduser(r"~\AppData\Local\Google\Chrome\User Data")
         if os.path.exists(user_data_dir):
             options.add_argument(f"--user-data-dir={user_data_dir}")
@@ -65,20 +63,14 @@ def _send_via_browser(phone, message):
         driver = webdriver.Chrome(options=options)
         driver.get(url)
 
-        # Wait up to 45s for the message input box to appear (means chat loaded)
-        # WhatsApp Web's message input has a contenteditable div inside the compose box
         wait = WebDriverWait(driver, 45)
         
-        # The send button appears once the text is pre-filled via the URL
-        # Look for the send button (green arrow) - it has a data-icon="send" attribute
         send_button = wait.until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[aria-label="Send"], span[data-icon="send"]'))
         )
         
-        # Click the send button directly
         send_button.click()
 
-        # Brief pause to let the message dispatch
         import time
         time.sleep(2)
 
@@ -104,11 +96,9 @@ def execute(params):
     if str(phone).strip().startswith("+"):
         clean_phone = "+" + clean_phone
 
-    # Strategy: Try Twilio first (silent), fall back to browser
     twilio_result = _send_via_twilio(clean_phone, message)
     
     if twilio_result and "failed" not in twilio_result.lower():
         return twilio_result
     
-    # Fallback: Selenium browser method (smart wait)
     return _send_via_browser(clean_phone, message)

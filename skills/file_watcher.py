@@ -1,7 +1,7 @@
 import time
 import os
-from watchdog.observers import Observer # type: ignore
-from watchdog.events import FileSystemEventHandler # type: ignore
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 _observers = []
 
@@ -23,7 +23,6 @@ class JarvisHandler(FileSystemEventHandler):
 def execute(params):
     path_to_watch = params.get("path")
     if not path_to_watch:
-        # Default to Downloads if on Windows
         path_to_watch = os.path.join(os.path.expanduser("~"), "Downloads")
 
     socketio = params.get("_socketio")
@@ -38,8 +37,6 @@ def execute(params):
         observer.start()
         _observers.append(observer)
         
-        # In a real tool use, this would run in a separate thread.
-        # For this skill, we'll just confirm it started.
         return f"Sir, I am now monitoring the directory: {path_to_watch}. I will notify you of any new additions."
     except Exception as e:
         return f"Sir, I failed to initialize the file watcher: {e}"

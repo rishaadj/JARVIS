@@ -1,4 +1,4 @@
-import psutil # type: ignore
+import psutil
 
 def execute(params):
     try:

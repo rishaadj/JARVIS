@@ -10,28 +10,25 @@ from PIL import Image
 
 class NeuralSwitchboard:
     """The Multi-Provider Brain of JARVIS. Failover order: Gemini -> Groq -> Ollama."""
-    
-    def __init__(self, gemini_api_keys: str, gemini_model: str, 
+
+    def __init__(self, gemini_api_keys: str, gemini_model: str,
                  groq_api_key: str = None, groq_model: str = "llama-3.3-70b-versatile",
                  ollama_model: str = "llama3.2-vision",
                  ollama_uncensored_model: str = "dolphin-llama3"):
-        
-        # 1. Gemini Config
+
         self.gemini_keys = [k.strip() for k in gemini_api_keys.replace(',', ' ').split() if k.strip()]
         self.gemini_idx = 0
         self.gemini_model = gemini_model
         self.gemini_client = genai.Client(api_key=self.gemini_keys[0]) if self.gemini_keys else None
-        
-        # 2. Groq Config
+
         self.groq_keys = [k.strip() for k in groq_api_key.replace(',', ' ').split() if k.strip()] if groq_api_key else []
         self.groq_idx = 0
         self.groq_model = groq_model
         self.groq_client = Groq(api_key=self.groq_keys[0]) if self.groq_keys else None
-        
-        # 3. Ollama Config
+
         self.ollama_model = ollama_model
         self.ollama_uncensored_model = ollama_uncensored_model
-        
+
         print(f"[NEURAL SWITCHBOARD] Initialized. Gemini: {len(self.gemini_keys)} keys | Groq: {len(self.groq_keys)} keys | Ollama: {self.ollama_model} | Uncensored: {self.ollama_uncensored_model}")
 
     def _rotate_gemini(self):
@@ -53,11 +50,10 @@ class NeuralSwitchboard:
     def _send_gemini(self, contents):
         """Internal helper for Gemini reasoning with auto-rotation."""
         if not self.gemini_client: return None
-        
+
         attempts = 0
         while attempts < len(self.gemini_keys):
             try:
-                # Gemini handles list of [text, PIL_Image] natively
                 response = self.gemini_client.models.generate_content(
                     model=self.gemini_model, contents=contents
                 )
@@ -76,7 +72,6 @@ class NeuralSwitchboard:
         """Internal helper for Groq reasoning with auto-rotation."""
         if not self.groq_client: return None
 
-        # Prepare payload
         has_image = False
         pil_image = None
         text_query = ""
@@ -111,8 +106,7 @@ class NeuralSwitchboard:
                     model=self.groq_model,
                     messages=messages,
                 )
-                
-                # Mock a Gemini-like response object
+
                 class MockResponse:
                     def __init__(self, text): self.text = text
                 return MockResponse(response.choices[0].message.content)
@@ -127,7 +121,6 @@ class NeuralSwitchboard:
         return None
 
     def send_message(self, contents, uncensored=False, forced_provider=None):
-        # 🔓 FORCE SPECIFIC PROVIDER (from HUD)
         if forced_provider and forced_provider != 'auto':
             if forced_provider == 'uncensored':
                 res = self._try_ollama(contents, use_uncensored=True)
@@ -144,31 +137,25 @@ class NeuralSwitchboard:
                 res = self._send_gemini(contents)
                 if res: return res
 
-        # 🔓 FORCE UNCENSORED MODE (Legacy flag support)
         if uncensored:
             print(f"[SWITCHBOARD] 🔓 Uncensored Mode Engaged. Using {self.ollama_uncensored_model}")
             return self._try_ollama(contents, use_uncensored=True)
 
-        # --- STEP 1: Try Gemini (Primary) ---
         res = self._send_gemini(contents)
         if res: return res
 
-        # --- STEP 2: Try Groq (Secondary Online) ---
         print("[SWITCHBOARD] Gemini failed. Failing over to Groq...")
         res = self._send_groq(contents)
         if res: return res
 
-        # --- STEP 3: Try Ollama (Local Offline Standard) ---
         res = self._try_ollama(contents)
         if res: return res
 
-        # --- STEP 4: Try Ollama (Local Uncensored Final Fallback) ---
         print("[SWITCHBOARD] 🏁 Final Resort: Attempting Uncensored Reasoning...")
         res = self._try_ollama(contents, use_uncensored=True)
         if res: return res
 
 
-        # --- IF EVERYTHING FAILED (including forced providers) ---
         return type("Err", (), {"text": "Sir, all neural systems (Online, Offline, and Uncensored) are currently unavailable."})()
 
     def _try_ollama(self, contents, use_uncensored=False):
@@ -190,20 +177,19 @@ class NeuralSwitchboard:
         model = self.ollama_uncensored_model if use_uncensored else self.ollama_model
         try:
             options = {
-                "num_ctx": 8192 # 🧠 Optimized: High enough for memory, low enough for RAM stability
+                "num_ctx": 8192
             }
             if has_image:
                 options["images"] = [self._pil_to_base64(pil_image)]
-            
+
             response = ollama.chat(
                 model=model,
                 messages=[{'role': 'user', 'content': text_query}],
                 options=options
             )
-            
+
             class MockResponse:
                 def __init__(self, text): self.text = text
             return MockResponse(response['message']['content'])
         except Exception as e:
-            # print(f"[SWITCHBOARD] Ollama ({model}) failed: {e}")
             return None

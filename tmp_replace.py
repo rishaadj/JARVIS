@@ -3,7 +3,6 @@ import re
 with open('e:/Projects/JARVIS/autonomous_core.py', 'r', encoding='utf-8') as f:
     code = f.read()
 
-# Replace act()
 act_start = code.find('    def act(self, thought):')
 act_end = code.find('    def _post_action_evaluate(self')
 
@@ -57,7 +56,6 @@ if original_idle_check in act_body:
     new_act_body = '\n'.join(final_lines)
     code = code.replace(act_body, new_act_body)
 
-# Replace _post_action_evaluate
 old_eval = '''    def _post_action_evaluate(self, last_action_text: str, result_text: str) -> None:
         if not self.active_goal: return
         try:

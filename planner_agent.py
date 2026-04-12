@@ -7,7 +7,6 @@ class PlannerAgent:
     def plan(self, goal: str, visual_context: str = "", memory=None):
         print(f"[PLANNER AGENT] Planning for: {goal}")
         
-        # 🧠 Semantic Recall
         past_memories = ""
         if memory:
             results = memory.search_semantic(goal, top_k=3)
@@ -57,7 +56,6 @@ class PlannerAgent:
                 line = line.strip()
                 if not line:
                     continue
-                # Allow accidental "ACTION:" prefix, strip it.
                 if line.upper().startswith("ACTION:"):
                     line = line[len("ACTION:"):].strip()
                 steps.append(line)

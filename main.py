@@ -12,28 +12,21 @@ from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO
 from vosk import Model, KaldiRecognizer
 
-# --- UPDATED 2026 SDK IMPORT ---
-# pip install google-genai
 from google import genai
 
-# Import the core and skills
 from autonomous_core import start_autonomous_core
 from utils.audio_manager import audio_manager
 from topology_engine import TopologyEngine
 
 from utils.neural_switchboard import NeuralSwitchboard
 
-# --- CONFIGURATION ---
 GEMINI_API_KEYS = os.getenv("GEMINI_API_KEYS", "").strip()
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite").strip()
 JARVIS_PIN = os.getenv("JARVIS_PIN", "0000").strip()
 
-# --- INITIALIZE FLASK & SOCKETIO FIRST ---
-# This MUST happen before any @socketio.on decorators are used.
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# --- REMOTE AUTHENTICATION ---
 @socketio.on('verify_pin')
 def on_verify_pin(data):
     pin = data.get('pin', '')
@@ -44,15 +37,14 @@ def on_verify_pin(data):
         socketio.emit('auth_failure')
         print(f"[SECURITY] Denied unauthorized access attempt.")
 
-# --- NEURAL BRAIN SETUP (Multi-Provider Switchboard) ---
 chat_session = None
 if GEMINI_API_KEYS:
     GROQ_KEY = os.getenv("GROQ_API_KEY", "").strip()
     O_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2-vision").strip()
     U_MODEL = os.getenv("OLLAMA_UNCENSORED_MODEL", "dolphin-llama3").strip()
-    
+
     chat_session = NeuralSwitchboard(
-        gemini_api_keys=GEMINI_API_KEYS, 
+        gemini_api_keys=GEMINI_API_KEYS,
         gemini_model=GEMINI_MODEL,
         groq_api_key=GROQ_KEY if "YOUR_GROQ" not in GROQ_KEY else None,
         ollama_model=O_MODEL,
@@ -62,22 +54,18 @@ if GEMINI_API_KEYS:
 else:
     print("[ERROR] GEMINI_API_KEYS is not set. Core will run in UI-only mode.")
 
-# Audio Queue for Vosk
 audio_queue = queue.Queue()
 
-# Global State
 core = None
 running = True
 
-# --- VOSK SETUP ---
 def load_vosk_model():
-    # Priority: Large EN-IN (High Accuracy) > Small EN-IN (Fast) > Generic Model
     model_options = [
         "vosk-model-en-in-0.5",
         "vosk-model-small-en-in-0.4",
         "model"
     ]
-    
+
     for m in model_options:
         if os.path.exists(m):
             try:
@@ -85,20 +73,18 @@ def load_vosk_model():
                 return Model(m)
             except Exception as e:
                 print(f"[WARNING] Failed to load model {m}: {e}")
-    
+
     print("[ERROR] No Vosk models found. Please run 'setup_indian_vosk.py'.")
     return None
 
 vosk_model = load_vosk_model()
 rec = KaldiRecognizer(vosk_model, 16000) if vosk_model else None
 
-# --- SKILL ENGINE ---
 def run_skill(skill_name, params=None):
     """Executes Jarvis skills (like speech or system commands)."""
     print(f"[SKILL] Executing: {skill_name} with {params}")
     if skill_name == "speak":
         text = params.get("text", "")
-        # Notify the UI that Jarvis is talking
         socketio.emit('jarvis_speaking', {'text': text})
         print(f"JARVIS: {text}")
 
@@ -117,7 +103,6 @@ def system_monitor():
         },
     }
 
-# --- NETWORKING & UI ROUTES ---
 @app.route('/')
 def index():
     from datetime import datetime
@@ -143,7 +128,6 @@ def api_analyse_image():
     if not file.filename:
         return jsonify({'error': 'Empty filename'}), 400
 
-    # Save to screenshots dir
     if not os.path.exists('screenshots'):
         os.makedirs('screenshots')
     from datetime import datetime
@@ -168,7 +152,6 @@ def api_analyse_image():
         response = chat_session.send_message([prompt, img])
         result = response.text.strip() if response and hasattr(response, 'text') else "Vision analysis returned no result."
 
-        # Broadcast to HUD
         socketio.emit('visual_awareness', {
             'context': result,
             'image_path': f"/screenshots/{os.path.basename(filepath)}",
@@ -200,10 +183,8 @@ def on_update_brain(data):
         print(f"[SYSTEM] HUD update: Active Brain set to {provider.upper()}")
 
 def run_web_server():
-    # Use allow_unsafe_werkzeug to permit running inside the JARVIS environment
     socketio.run(app, host='0.0.0.0', port=5000, debug=False, use_reloader=False, allow_unsafe_werkzeug=True)
 
-# --- SENSORY INPUT (VOICE) ---
 INTERRUPT_ALLOWLIST = {"stop", "jarvis", "wait", "cancel", "shut up", "hush", "stark"}
 
 def audio_callback(indata, frames, time_info, status):
@@ -214,50 +195,57 @@ def audio_callback(indata, frames, time_info, status):
 def listen_loop():
     """Main voice recognition loop with Smart Barge-In & Noise Filtering."""
     print("[SYSTEM] Voice Recognition Active...")
+    import time
+    last_speak_time = 0
     try:
+        device_info = sd.query_devices(kind='input')
+        print(f"[SYSTEM] Locking Input to: {device_info['name']}")
         with sd.RawInputStream(samplerate=16000, blocksize=8000, dtype='int16',
-                                channels=1, callback=audio_callback):
+                                channels=1, callback=audio_callback, device=device_info['index']):
             while running:
+                if audio_manager.is_speaking:
+                    last_speak_time = time.time()
+                
+                if time.time() - last_speak_time < 0.5:
+                    try:
+                        audio_queue.get_nowait()
+                    except:
+                        pass
+                    continue
+
                 try:
                     data = audio_queue.get(timeout=0.1)
                 except queue.Empty:
                     continue
-                
-                # 1. Smart Barge-In (The Filter)
+
                 if audio_manager.is_speaking:
                     partial_str = rec.PartialResult()
                     if partial_str:
                         partial_data = json.loads(partial_str)
                         partial_text = partial_data.get("partial", "").strip().lower()
-                        
-                        # Only allow high-priority interrupts while JARVIS is speaking
+
                         if any(cmd in partial_text for cmd in INTERRUPT_ALLOWLIST):
                             print(f"[SYSTEM] Priority Interrupt Detected: '{partial_text}'")
                             audio_manager.stop_speaking()
                         else:
-                            # Silence the "self-listening" noise
                             continue
 
                 if rec.AcceptWaveform(data):
                     result = json.loads(rec.Result())
                     user_text = result.get("text", "").strip()
-                    
+
                     if not user_text:
                         continue
 
-                    # 2. Heuristic Nonsense Filter
-                    # Ignore 1-word or 2-letter fragments unless they are in allowlist (e.g. "fellow man", "selling imagine")
                     words = user_text.split()
                     is_interrupt = any(cmd in user_text.lower() for cmd in INTERRUPT_ALLOWLIST)
-                    
+
                     if len(words) < 2 and not is_interrupt:
-                        # print(f"[DEBUG] Noise Ignored: '{user_text}'")
                         continue
-                    
-                    # 3. Only process if not currently speaking (Echo Guard)
+
                     if not audio_manager.is_speaking or is_interrupt:
                         process_intent(user_text)
-                    
+
     except Exception as e:
         print(f"[ERROR] listen_loop error: {e}")
     except Exception as e:
@@ -278,23 +266,18 @@ def system_log_loop():
         time.sleep(10)
 
 
-# --- MAIN ENTRY ---
 if __name__ == "__main__":
     print("\n" + "="*30)
     print("--- JARVIS SYSTEM ONLINE ---")
     print("="*30 + "\n")
 
     try:
-        # 1. Initialize the Core (The Brain)
         if chat_session is not None:
-            # We pass the chat_session (stateful) instead of just the client
             core = start_autonomous_core(run_skill, system_monitor, chat_session, socketio)
-        
-        # 2. Start Services
+
         threading.Thread(target=run_web_server, daemon=True).start()
         threading.Thread(target=system_log_loop, daemon=True).start()
 
-        # 3. Start Voice (Blocking Main Thread)
         if vosk_model:
             listen_loop()
         else:

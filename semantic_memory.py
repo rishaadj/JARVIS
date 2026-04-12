@@ -7,7 +7,7 @@ class SemanticMemory:
     def __init__(self, chat_obj, index_file="semantic_index.json"):
         self.chat = chat_obj
         self.index_file = index_file
-        self.memories = [] # List of tuples: (vector, metadata)
+        self.memories = []
         self._load_index()
 
     def _load_index(self):
@@ -15,7 +15,6 @@ class SemanticMemory:
             try:
                 with open(self.index_file, "r") as f:
                     data = json.load(f)
-                    # Convert list-vectors back to numpy arrays
                     self.memories = [(np.array(m['vector']), m['metadata']) for m in data]
             except Exception as e:
                 print(f"[SEMANTIC MEMORY] Load Error: {e}")
@@ -23,7 +22,6 @@ class SemanticMemory:
 
     def _save_index(self):
         try:
-            # Convert numpy vectors to lists for JSON serialization
             data = [{'vector': m[0].tolist(), 'metadata': m[1]} for m in self.memories]
             with open(self.index_file, "w") as f:
                 json.dump(data, f, indent=2)
@@ -35,7 +33,6 @@ class SemanticMemory:
         try:
             from google import genai
             import os
-            # Using the first key from Rotator pool for basic embedding tasks
             keys = os.getenv("GEMINI_API_KEYS", "")
             first_key = [k.strip() for k in keys.replace(',', ' ').split() if k.strip()][0]
             
@@ -44,7 +41,6 @@ class SemanticMemory:
                 model="gemini-embedding-001",
                 contents=text
             )
-            # Extracted vector based on new SDK schema
             return np.array(result.embeddings[0].values)
         except Exception as e:
             if "text-embedding-004" in str(e):
@@ -88,12 +84,9 @@ class SemanticMemory:
             
         results = []
         for vector, metadata in self.memories:
-            # Cosine similarity: (A · B) / (||A|| * ||B||)
-            # Since genai usually returns normalized embeddings, dot product is enough.
             similarity = np.dot(query_vector, vector)
             results.append((similarity, metadata))
             
-        # Sort by similarity descending
         results.sort(key=lambda x: x[0], reverse=True)
         return results[:top_k]
 

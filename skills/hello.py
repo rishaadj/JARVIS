@@ -1,7 +1,6 @@
 import datetime
 
 def execute(params):
-    # Get the name from params, defaulting to Sir
     name = params.get("name", "Sir")
     
     hour = datetime.datetime.now().hour

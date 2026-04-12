@@ -16,18 +16,15 @@ def execute(params):
         query = key.lower()
         matches = []
         
-        # 1. Check for exact key match
         if key in memory:
             return f"Sir, under '{key}', I remember: {memory[key]}"
         
-        # 2. Check for keyword matches in keys and values
         for k, v in memory.items():
             if query in k.lower() or query in str(v).lower():
-                matches.append(f"'{k}': {v}") # type: ignore
+                matches.append(f"'{k}': {v}")
         
         if matches:
             results = "\n".join(matches)
-            # Add semantic results for more breadth
             memory_manager = params.get("_memory")
             if memory_manager:
                 sem_results = memory_manager.search_semantic(query, top_k=2)

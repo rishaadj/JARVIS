@@ -30,7 +30,6 @@ class GestureEngine:
                 from mediapipe.tasks import python
                 from mediapipe.tasks.python import vision
                 
-                # Model provisioning
                 model_path = 'hand_landmarker.task'
                 if not os.path.exists(model_path):
                     print("[GESTURE ENGINE] Downloading HandLandmarker model (~5MB)...")
@@ -53,9 +52,8 @@ class GestureEngine:
         
         self.screen_w, self.screen_h = pyautogui.size()
         
-        # Smoothing variables
         self.prev_x, self.prev_y = 0, 0
-        self.smooth_factor = 7 # Higher = smoother but more lag
+        self.smooth_factor = 7
         self.is_pinch = False
 
     def start(self):
@@ -95,9 +93,8 @@ class GestureEngine:
                     if not success:
                         print("[GESTURE ENGINE] Frame drop or camera disconnected.")
                         self.latest_frame = None
-                        time.sleep(1) # Backoff if disconnected
+                        time.sleep(1)
                         continue
-                    # Overwrite buffer with latest frame immediately (drops old frames)
                     self.latest_frame = img
                 else:
                     time.sleep(0.1)
@@ -113,57 +110,45 @@ class GestureEngine:
                 time.sleep(0.05)
                 continue
             
-            # Consume the frame so we don't process the same one 10 times before the hardware gives us a new one
             self.latest_frame = None
 
             try:
-                # Copy frame to avoid thread race conditions
                 img = frame.copy()
                 
-                # Flip for mirror effect
                 img = cv2.flip(img, 1)
                 img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                 
-                # Format image for MP Tasks
                 mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=img_rgb)
                 detection_result = self.detector.detect(mp_image)
 
                 status = "LOST"
                 if getattr(detection_result, 'hand_landmarks', []):
                     status = "TRACKING"
-                    # Hand landmarks is a list of hands, get the first hand (which is a list of landmarks)
                     landmarks = detection_result.hand_landmarks[0]
                     
-                    # Get Index Finger Tip (8) and Thumb Tip (4)
                     index_tip = landmarks[8]
                     thumb_tip = landmarks[4]
                     
-                    # 🖱️ MOUSE MOVE (Index Finger)
-                    # Map camera coordinates to screen coordinates
                     target_x = np.interp(index_tip.x, [0.2, 0.8], [0, self.screen_w])
                     target_y = np.interp(index_tip.y, [0.2, 0.8], [0, self.screen_h])
                     
-                    # Smoothing
                     curr_x = self.prev_x + (target_x - self.prev_x) / self.smooth_factor
                     curr_y = self.prev_y + (target_y - self.prev_y) / self.smooth_factor
                     
                     pyautogui.moveTo(curr_x, curr_y, _pause=False)
                     self.prev_x, self.prev_y = curr_x, curr_y
 
-                    # 👆 PINCH TO CLICK (Distance between Index and Thumb)
                     distance = np.hypot(index_tip.x - thumb_tip.x, index_tip.y - thumb_tip.y)
-                    if distance < 0.05: # Threshold for pinch
+                    if distance < 0.05:
                         if not self.is_pinch:
                             pyautogui.click(_pause=False)
                             self.is_pinch = True
                     else:
                         self.is_pinch = False
 
-                # Update HUD status
                 if self.socketio:
                     self.socketio.emit('gesture_status', {'status': status})
 
-                # Optional: 30 FPS cap to save CPU
                 time.sleep(0.01)
                 
             except Exception as e:

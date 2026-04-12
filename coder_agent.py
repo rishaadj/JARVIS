@@ -39,7 +39,6 @@ class CoderAgent:
         try:
             response = self.chat.send_message(prompt)
             code = response.text.strip()
-            # Basic validation
             ast.parse(code)
             return code
         except SyntaxError as e:

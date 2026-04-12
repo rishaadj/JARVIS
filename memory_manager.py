@@ -2,7 +2,6 @@ import json
 import os
 from semantic_memory import SemanticMemory
 
-# Unify the filename here
 MEMORY_FILE = "jarvis_memory.json"
 
 class MemoryManager:
@@ -13,7 +12,6 @@ class MemoryManager:
             self.semantic = SemanticMemory(chat_obj)
 
     def _ensure_file_exists(self):
-        # Fixes the "Line 1 Column 1" error by ensuring {} exists
         if not os.path.exists(MEMORY_FILE) or os.stat(MEMORY_FILE).st_size == 0:
             with open(MEMORY_FILE, "w") as f:
                 json.dump({}, f)
@@ -28,7 +26,6 @@ class MemoryManager:
 
     def save_memory(self, data):
         try:
-            # Atomic save: write to temp first, then rename
             temp_file = f"{MEMORY_FILE}.tmp"
             with open(temp_file, "w") as f:
                 json.dump(data, f, indent=2)

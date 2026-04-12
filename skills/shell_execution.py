@@ -7,7 +7,6 @@ def execute(params):
 
     import platform
     if platform.system() == "Windows":
-        # Handle common Linux-style commands by translating them to Windows equivalents
         if command.startswith("top") or "ps" in command:
             command = "tasklist"
         elif "ls " in command or command == "ls":
@@ -16,13 +15,11 @@ def execute(params):
             command = command.replace("grep", "findstr")
 
     try:
-        # Run command and capture output
         result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=30)
         
         output = result.stdout.strip()
         error = result.stderr.strip()
 
-        # Truncate long outputs
         if len(output) > 1000:
             output = output[:1000] + "\n...(truncated for brevity)..."
         if len(error) > 1000:

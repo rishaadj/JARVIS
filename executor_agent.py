@@ -11,12 +11,10 @@ class ExecutorAgent:
     def __init__(self, run_skill_fn):
         self.run_skill = run_skill_fn
         self.skills_path = os.path.join(os.path.dirname(__file__), "skills")
-        # Ensure skills can import shared helpers from the repo root (e.g. speech_formatter.py).
         repo_root = os.path.dirname(os.path.abspath(__file__))
         if repo_root not in sys.path:
             sys.path.insert(0, repo_root)
 
-        # Sync from Centralized Registry.
         self.skill_param_contract = get_param_contract()
 
     def _coerce_value(self, key: str, value: Any, target_type: type) -> Any:
@@ -43,7 +41,6 @@ class ExecutorAgent:
         if not rules:
             return True, ""
 
-        # Path Guard for file-related skills
         if skill_name in ["file_management", "run_script", "list_files"]:
             path = params.get("path") or params.get("target") or "."
             if not safety_manager.validate_path(path):
@@ -127,19 +124,16 @@ class ExecutorAgent:
         if not skill_name:
             return None
 
-        # 1. Safety Check (Environment Allowlists)
         if not safety_manager.is_skill_allowed(skill_name):
             error_msg = f"Skill `{skill_name}` is not allowed in the current environment ({safety_manager.env})."
             safety_manager.audit_log("EXECUTOR", skill_name, params, "BLOCKED", error_msg)
             return error_msg
 
-        # 2. Parameter Validation (includes Path Guard)
         ok, err = self._validate_skill_params(skill_name, params or {})
         if not ok:
             safety_manager.audit_log("EXECUTOR", skill_name, params, "INVALID_PARAMS", err)
             return f"Parameter validation failed for `{skill_name}`: {err}"
 
-        # 3. Execution
         result = None
         try:
             skill_file = os.path.join(self.skills_path, f"{skill_name}.py")
@@ -167,4 +161,4 @@ class ExecutorAgent:
             skill_name, params = self.parse_task(task)
             return self.execute_skill(skill_name, params)
         except Exception as e:
-            print(f"[EXECUTOR] Error: {e}")
+            print(f"[EXECUTOR] Error: {e}")

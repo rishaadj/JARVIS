@@ -24,7 +24,6 @@ def execute(params):
         with open(file_path, "w") as f:
             f.write(code)
         
-        # Audit the synthesis action
         safety_manager.audit_log("SKILL_TOOL", "create_skill", {"skill": skill_name}, "SUCCESS", f"Manual creation via tool. Plan: {plan}")
             
         return f"Sir, the new skill '{skill_name}' has been successfully validated, logged, and integrated into my cognitive systems."

@@ -1,4 +1,4 @@
-import pyautogui # type: ignore
+import pyautogui
 import os
 from datetime import datetime
 
@@ -8,7 +8,6 @@ def execute(params):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"screenshot_{timestamp}.png"
     
-    # Save to static folder if it exists, otherwise current dir
     save_path = os.path.join("screenshots", filename)
     if not os.path.exists("screenshots"):
         os.makedirs("screenshots")

@@ -1,6 +1,6 @@
 import os
 import zipfile
-import requests # type: ignore
+import requests
 
 def setup_vosk_model():
     model_dir = "model"

@@ -1,23 +1,19 @@
-import cv2 # type: ignore
-import numpy as np # type: ignore
-import pyautogui # type: ignore
-import pytesseract # type: ignore
+import cv2
+import numpy as np
+import pyautogui
+import pytesseract
 import os
 from datetime import datetime
 
-# Note: pytesseract requires Tesseract-OCR binary installed on the system.
-# Usually: C:\Program Files\Tesseract-OCR\tesseract.exe
 
 def execute(params):
-    action = params.get("action", "ocr") # ocr, capture
+    action = params.get("action", "ocr")
     
     try:
-        # Take a screenshot
         screenshot = pyautogui.screenshot()
         img = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
         
         if action == "ocr":
-            # Basic OCR
             text = pytesseract.image_to_string(img)
             if not text.strip():
                 return "Sir, I scanned the screen but couldn't detect any legible text."

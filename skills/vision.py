@@ -8,7 +8,6 @@ def execute(params):
     Skill: Vision / Screen Capture
     Analyzes the current screen state.
     """
-    # Create a directory for screenshots if it doesn't exist
     if not os.path.exists("screenshots"):
         os.makedirs("screenshots")
 
@@ -27,7 +26,6 @@ def execute(params):
         screenshot.thumbnail((1280, 720))
         screenshot.save(filepath)
         
-        # Return the path so the Core knows where to find the image
         return f"SCREENSHOT_SAVED: {filepath}"
     except Exception as e:
         return f"VISION_ERROR: {str(e)}"

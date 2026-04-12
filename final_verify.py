@@ -4,7 +4,6 @@ import json
 from dotenv import load_dotenv
 from PIL import Image
 
-# Add root to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv()
 
@@ -29,13 +28,10 @@ def final_verification():
     print(f"Search results: {len(results)}")
 
     print("\n[STEP 3] Testing Reasoning Failover (Forcing Groq)...")
-    # We use a non-existent provider to force a failover or just force groq
     res = brain.send_message("What is 2+2?", forced_provider="groq")
     print(f"Groq Response: {res.text}")
 
     print("\n[STEP 4] Testing NoneType Safety (Simulating all fail)...")
-    # To simulate all fail, we can temp break the clients or just trust the logic
-    # But we've seen it return the "Err" object in test_switchboard.
     print("Done.")
 
 if __name__ == "__main__":

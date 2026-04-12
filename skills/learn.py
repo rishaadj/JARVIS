@@ -10,7 +10,6 @@ def execute(params):
     if not key or not fact:
         return "I need both a key and a fact to learn something, Sir."
 
-    # Load existing memory safely
     memory = {}
     if os.path.exists(MEMORY_FILE) and os.stat(MEMORY_FILE).st_size > 0:
         try:
@@ -19,14 +18,11 @@ def execute(params):
         except json.JSONDecodeError:
             memory = {}
     
-    # Update
     memory[key] = fact
     
-    # Save safely
     with open(MEMORY_FILE, 'w') as f:
         json.dump(memory, f, indent=4)
     
-    # Dual-store: also update semantic memory if available
     memory_manager = params.get("_memory")
     if memory_manager:
         memory_manager.store_semantic(f"Learned fact about {key}: {fact}", {"type": "user_fact", "key": key})

@@ -1,12 +1,12 @@
-import pyautogui # type: ignore
+import pyautogui
 
 def execute(params):
-    action = params.get("action", "").lower() # move, click, drag, scroll
+    action = params.get("action", "").lower()
     x = params.get("x")
     y = params.get("y")
     clicks = params.get("clicks", 1)
-    button = params.get("button", "left") # left, right, middle
-    amount = params.get("amount", 0) # for scroll
+    button = params.get("button", "left")
+    amount = params.get("amount", 0)
 
     try:
         if action == "move":

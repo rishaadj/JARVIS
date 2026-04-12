@@ -1,4 +1,4 @@
-import pyautogui # type: ignore
+import pyautogui
 
 def execute(params):
     action = params.get("action", "").lower()
@@ -12,7 +12,6 @@ def execute(params):
             pyautogui.press('volumedown')
         return f"Sir, I've successfully adjusted the volume {action}."
     elif action == "mute":
-        # Toggle mute
         pyautogui.press("volumemute")
         return "Sir, I have toggled the sound state."
     else:

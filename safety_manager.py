@@ -4,7 +4,6 @@ import logging
 from datetime import datetime
 
 class SafetyManager:
-    # Environments
     RESTRICTED = "RESTRICTED"
     DEVELOPMENT = "DEVELOPMENT"
     PRODUCTION = "PRODUCTION"
@@ -15,8 +14,6 @@ class SafetyManager:
         self._setup_audit_logger()
         self.latest_violation = None
 
-        # Allowlists: (Skill -> Allowed Environments)
-        # If a skill isn't here, it defaults to PRODUCTION only.
         self.allowlists = {
             "speak": [self.RESTRICTED, self.DEVELOPMENT, self.PRODUCTION],
             "timer": [self.RESTRICTED, self.DEVELOPMENT, self.PRODUCTION],
@@ -54,7 +51,6 @@ class SafetyManager:
         if status == "DENIED":
             self.latest_violation = f"{agent_role} attempted {skill_name} but was DENIED in {self.env} environment."
         
-        # Clean params to remove non-serializable SocketIO object
         clean_params = dict(params or {})
         if "_socketio" in clean_params:
             del clean_params["_socketio"]
@@ -80,15 +76,12 @@ class SafetyManager:
         repo_root = os.path.dirname(os.path.abspath(__file__))
         abs_path = os.path.abspath(path)
         
-        # Allow repo root
         if abs_path.startswith(repo_root):
             return True
             
-        # Block common sensitive dirs on Windows
         sensitive_dirs = ["C:\\Windows", "C:\\Users", "C:\\Program Files"]
         for sd in sensitive_dirs:
             if abs_path.startswith(sd) and not abs_path.startswith(os.path.join("C:\\Users", os.getlogin(), "Desktop")):
-                # Special allowance for Desktop/Downloads if needed, but for now be strict.
                 return False
         
         return True

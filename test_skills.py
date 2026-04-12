@@ -24,7 +24,6 @@ def test_shell():
 def test_email():
     from skills.email_sender import execute
     print("\n--- TEST: email_sender (dry run) ---")
-    # This will fail gracefully if EMAIL_USER/EMAIL_PASS env vars aren't set
     result = execute({
         "to": "Recievers Email",
         "subject": "JARVIS Test",
@@ -39,7 +38,7 @@ def test_whatsapp():
     confirm = input("Run this test? (y/n): ").strip().lower()
     if confirm == 'y':
         result = execute({
-            "phone": "Recievers Phone Number",  # Change to a real number to test
+            "phone": "Recievers Phone Number",
             "message": "Test from JARVIS"
         })
         print(f"Result: {result}")

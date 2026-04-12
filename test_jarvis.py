@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 async def system_check():
     print("--- JARVIS SYSTEM CHECK ---")
     
-    # Check 1: AI Brain
     try:
         load_dotenv()
         keys = os.getenv("GEMINI_API_KEYS", "")
@@ -19,7 +18,6 @@ async def system_check():
     except Exception as e:
         print(f"FAILED AI Engine: Failed ({e})")
 
-    # Check 2: Vision
     cap = cv2.VideoCapture(0)
     if cap.isOpened():
         print("SUCCESS Vision: Camera Accessible")
@@ -27,7 +25,6 @@ async def system_check():
     else:
         print("FAILED Vision: Camera Not Found")
 
-    # Check 3: Voice
     print("SUCCESS Voice: edge-tts Ready")
     print("---------------------------")
 

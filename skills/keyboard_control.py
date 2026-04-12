@@ -1,10 +1,10 @@
-import pyautogui # type: ignore
+import pyautogui
 
 def execute(params):
     action = params.get("action", "").lower()
     text = params.get("text", "")
     key = params.get("key", "")
-    hotkey = params.get("hotkey", []) # List of keys like ["ctrl", "c"]
+    hotkey = params.get("hotkey", [])
 
     try:
         if action == "type":

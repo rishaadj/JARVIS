@@ -13,21 +13,15 @@ class SystemSentinel:
         self.interval = interval
         self.active = False
         
-        # 🧩 Component Integration
         self.scheduler = TaskScheduler(self._fire_event)
         self.watcher = FilesystemWatcher(self._fire_event)
 
-        # 🛡️ Quota & "Anti-Spam" Management
         self.telemetry_history = deque(maxlen=6)
         self.last_proactive_ts = 0
-        self.proactive_cooldown = 600 # 10 minute gap between unprompted chats
+        self.proactive_cooldown = 600
         
-        # Track last fired event types for duplicate suppression
-        # event_type -> last_fired_timestamp
         self.event_history = {} 
 
-        # 📅 Default Scheduled Tasks
-        # Example: Daily system briefing at 9:00 AM
         from datetime import timedelta
         briefing_time = datetime.now().replace(hour=9, minute=0, second=0, microsecond=0)
         if briefing_time < datetime.now():
@@ -39,23 +33,19 @@ class SystemSentinel:
         print(f"[SENTINEL] System Watchdog Active (Interval: {self.interval}s).")
         while self.active:
             try:
-                # 1. Check System Telemetry
                 try:
                     status = self.monitor.observe()
                     self.telemetry_history.append(status)
                     
-                    # Check for sustained high load
                     if self._check_sustained_load():
                         self._fire_event("critical_load", f"Sustained high system load detected: CPU {status.get('cpu')}% | RAM {status.get('ram')}%", priority="high")
 
-                    # Check for low battery
                     battery = status.get('battery')
                     if battery and battery.get('percent', 100) < 20 and not battery.get('power_plugged', True):
                         self._fire_event("low_battery", f"Critical battery level: {battery['percent']}%", priority="high")
                 except Exception as e:
                     print(f"[SENTINEL] Telemetry Error: {e}")
 
-                # 2. Check Security Context
                 try:
                     if hasattr(self.safety, "get_latest_violation"):
                         violation = self.safety.get_latest_violation()
@@ -81,14 +71,10 @@ class SystemSentinel:
         """
         now = time.time()
         
-        # 1. Significance & Frequency Filter (Debouncer)
         last_time = self.event_history.get(event_type, 0)
-        # Don't fire the SAME event type more than once every 10 minutes (unless high priority)
         if priority != "high" and (now - last_time < self.proactive_cooldown):
             return
 
-        # 2. Global "Annoyance" Filter (Talking Cooldown)
-        # Ensure we don't start a NEW autonomous conversation too soon after the last one.
         if priority != "high" and (now - self.last_proactive_ts < self.proactive_cooldown):
             return
 
@@ -102,17 +88,14 @@ class SystemSentinel:
         self.event_queue.put(event)
         self.event_history[event_type] = now
         
-        # If it's a priority event or a significant update, record the timestamp
         if priority == "high" or event_type in ["file_created", "scheduled_task"]:
             self.last_proactive_ts = now
 
     def start(self):
         if not self.active:
             self.active = True
-            # Start Sub-systems
             self.scheduler.start()
             self.watcher.start()
-            # Start Watchdog Loop
             self.thread = threading.Thread(target=self.monitor_loop, daemon=True)
             self.thread.start()
 

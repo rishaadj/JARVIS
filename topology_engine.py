@@ -15,7 +15,6 @@ class TopologyEngine:
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
-                # matches: from x.y import z, import x.y
                 patterns = [
                     r"^from\s+([a-zA-Z0-9_\.]+)\s+import",
                     r"^import\s+([a-zA-Z0-9_\.,\s]+)$"
@@ -23,7 +22,6 @@ class TopologyEngine:
                 for p in patterns:
                     matches = re.findall(p, content, re.MULTILINE)
                     for m in matches:
-                        # Clean up multiple imports like 'import os, sys'
                         parts = [x.strip().split('.')[0] for x in m.split(',')]
                         imports.extend(parts)
         except:
@@ -34,9 +32,8 @@ class TopologyEngine:
         nodes = []
         links = []
         
-        # 📂 File System Nodes
-        file_map = {} # rel_path -> id
-        name_map = {} # module_name -> id
+        file_map = {}
+        name_map = {}
         counter = 0
         
         file_list = []
@@ -52,7 +49,6 @@ class TopologyEngine:
             file_id = f"file_{counter}"
             file_map[rel_path] = file_id
             
-            # Module name for matching imports (e.g. 'utils/audio_manager.py' -> 'audio_manager')
             module_name = os.path.splitext(file_name)[0]
             name_map[module_name] = file_id
             
@@ -65,7 +61,6 @@ class TopologyEngine:
             })
             counter += 1
 
-        # ⛓️ Dependency Links (Import Tracking)
         for rel_path, file_name, full_path in file_list:
             if not file_name.endswith('.py'):
                 continue
@@ -77,7 +72,6 @@ class TopologyEngine:
                     if source_id != target_id:
                         links.append({"source": source_id, "target": target_id, "type": "import"})
 
-        # 🧠 Semantic Memory Nodes
         memory_path = os.path.join(self.root_dir, "semantic_index.json")
         if os.path.exists(memory_path):
             try:
@@ -97,11 +91,9 @@ class TopologyEngine:
             except:
                 pass
 
-        # 🔗 Root Backbone
         project_node = {"id": "root", "name": "JARVIS_CORE", "type": "project"}
         nodes.insert(0, project_node)
         
-        # Only link files to root if they have no other incoming/outgoing connections (clutter reduction)
         connected_ids = set()
         for l in links:
             connected_ids.add(l['source'])

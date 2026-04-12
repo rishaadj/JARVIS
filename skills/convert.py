@@ -1,5 +1,5 @@
 import os
-import fitz  # PyMuPDF
+import fitz
 from PIL import Image
 
 def execute(params):
@@ -14,7 +14,6 @@ def execute(params):
     ext = os.path.splitext(input_file)[1].lower()
 
     try:
-        # CASE 1: PDF to Images
         if ext == ".pdf":
             doc = fitz.open(input_file)
             for page_num in range(len(doc)):
@@ -25,10 +24,8 @@ def execute(params):
             doc.close()
             print(f"JARVIS: PDF converted. Created {len(doc)} {target_format} files.")
 
-        # CASE 2: Image to Image (JPG, PNG, WEBP, BMP, etc.)
         elif ext in [".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tiff"]:
             img = Image.open(input_file)
-            # Handle transparency if converting to JPG
             if target_format in ["jpg", "jpeg"] and img.mode in ("RGBA", "P"):
                 img = img.convert("RGB")
             output_path = f"{base_name}.{target_format}"

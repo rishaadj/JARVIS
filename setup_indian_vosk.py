@@ -40,7 +40,6 @@ def setup_indian_vosk():
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(".")
         
-        # Cleanup
         os.remove(zip_path)
         print(f"[SUCCESS] High-Accuracy Indian English Model is now ready in '{target_dir}'.")
     except Exception as e:

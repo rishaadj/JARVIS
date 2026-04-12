@@ -38,7 +38,6 @@ SUGGESTION: <next action in the same format: "ACTION: <skill_name>: {{...}}" or 
                 if "STATUS:" in line:
                     status = line.split("STATUS:")[1].strip().lower()
                 if "SUGGESTION:" in line:
-                    # Important: do NOT lowercase suggestion; it may contain JSON or casing-sensitive values.
                     suggestion = line.split("SUGGESTION:")[1].strip()
 
             return status, suggestion

@@ -1,11 +1,5 @@
 import os
 
-# Skill Registry: The single source of truth for JARVIS's capabilities.
-# Each entry defines: 
-# - Name
-# - Description (for AI prompt)
-# - Params (JSON schema)
-# - Risk Level: 0 (Safe), 1 (Needs Confirmation if not High-Trust)
 
 SKILL_REGISTRY = {
     "speak": {
@@ -26,7 +20,7 @@ SKILL_REGISTRY = {
     "email_sender": {
         "desc": "Send an email in the background without opening the UI. Highly preferred for sending messages.",
         "params": {"to": "string", "subject": "string", "body": "string"},
-        "risk": 0 # Moved to 0 because SMTP is safer than manual UI control
+        "risk": 0
     },
     "vision": {
         "desc": "Look at the screen to analyze what is currently visible.",
@@ -93,14 +87,18 @@ SKILL_REGISTRY = {
         "params": {"action": "string", "text": "string", "key": "string"},
         "risk": 0
     },
+    "send_whatsapp_message": {
+        "desc": "Send a WhatsApp message via Twilio API or browser fallback. Highly reliable for messaging.",
+        "params": {"phone": "string", "message": "string"},
+        "risk": 0
+    },
 }
 
 def get_skill_list_prompt():
-    """Generates a human-readable skill list for AI system prompts. 
+    """Generates a human-readable skill list for AI system prompts.
     Escapes braces to avoid KeyError during string formatting."""
     lines = []
     for name, data in SKILL_REGISTRY.items():
-        # Convert params dict to escaped string
         params_str = str(data['params']).replace("{", "{{").replace("}", "}}")
         lines.append(f"- {name}: {data['desc']} | Params: {params_str}")
     return "\n".join(lines)
@@ -109,11 +107,10 @@ def get_param_contract():
     """Generates the parameter contract for ExecutorAgent validation."""
     contract = {}
     for name, data in SKILL_REGISTRY.items():
-        # Map shorthand 'string'/'integer' to actual types
         req = {}
         for pk, pt in data['params'].items():
             if "string" in pt: req[pk] = str
             elif "integer" in pt: req[pk] = int
-            else: req[pk] = str # Fallback
+            else: req[pk] = str
         contract[name] = {"required": req}
     return contract

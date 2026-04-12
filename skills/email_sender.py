@@ -20,7 +20,6 @@ def execute(params):
     msg['To'] = to_email
 
     try:
-        # Added a 10-second timeout to prevent JARVIS from hanging
         with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=10) as smtp:
             smtp.login(sender_email, sender_password)
             smtp.send_message(msg)

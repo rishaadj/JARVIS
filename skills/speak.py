@@ -6,11 +6,9 @@ import threading
 from speech_formatter import format_for_speech
 from utils.audio_manager import audio_manager
 
-# --- Global Lock for Thread-Safe Speech (pyttsx3) ---
 speech_lock = threading.Lock()
 
 
-# --- Dependency Check & Optional Imports ---
 HAS_PYGAME = False
 try:
     import pygame
@@ -33,7 +31,6 @@ async def generate_and_play(text, socketio=None, voice="en-GB-RyanNeural"):
     if not clean_text:
         return
 
-    # --- STRATEGY A: High-Quality Edge-TTS (Requires Pygame + MP3 support) ---
     if HAS_PYGAME:
         output_file = "speech_output.mp3"
         try:
@@ -71,7 +68,7 @@ async def generate_and_play(text, socketio=None, voice="en-GB-RyanNeural"):
                     pygame.mixer.stop()
                 
                 audio_manager.stop_speaking()
-                return # SUCCESS
+                return
         except Exception as e:
             print(f"[SPEECH] Online TTS failed: {e}. Switching to offline fallback...")
         finally:
@@ -79,13 +76,11 @@ async def generate_and_play(text, socketio=None, voice="en-GB-RyanNeural"):
                 try: os.remove(output_file)
                 except: pass
 
-    # --- STRATEGY B: Offline Robust Fallback (pyttsx3) ---
     try:
         def run_offline():
             with speech_lock:
                 audio_manager.start_speaking()
                 engine = pyttsx3.init()
-                # Slightly Stark-like voice profile (clear, measured)
                 engine.setProperty('rate', 175)
                 engine.setProperty('volume', 1.0)
                 engine.say(clean_text)

@@ -16,5 +16,4 @@ class AudioManager:
     def should_stop(self):
         return self._stop_event.is_set()
 
-# Global instance
 audio_manager = AudioManager()

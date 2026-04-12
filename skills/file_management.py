@@ -2,10 +2,10 @@ import os
 import shutil
 
 def execute(params):
-    action = params.get("action") # create_file, delete_file, move_file, rename_file, create_dir
+    action = params.get("action")
     path = params.get("path")
-    target = params.get("target") # for move/rename
-    content = params.get("content", "") # for create_file
+    target = params.get("target")
+    content = params.get("content", "")
 
     if not action or not path:
         return "Sir, I need an action and a path to manage files."

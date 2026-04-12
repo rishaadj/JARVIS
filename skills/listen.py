@@ -1,8 +1,7 @@
 import speech_recognition as sr
 
-# Global recognizer for consistency
 r = sr.Recognizer()
-r.energy_threshold = 300  # Adjust this if he's too sensitive to noise
+r.energy_threshold = 300
 r.dynamic_energy_threshold = True
 
 def execute(params=None):

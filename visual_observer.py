@@ -43,7 +43,6 @@ class VisualObserver:
                 screenshot = pyautogui.screenshot()
                 w_title = "Desktop"
                 
-            # Downscale resolution to max 720p equivalent to save Tokens
             screenshot.thumbnail((1280, 720))
             screenshot.save(filepath)
             self.last_screenshot_path = filepath
@@ -69,7 +68,6 @@ class VisualObserver:
             
             self._emit_update(self.visual_context, f"/screenshots/{os.path.basename(filepath)}")
             
-            # --- PASSIVE LEARNING ---
             if self.memory:
                 self.memory.store_semantic(f"Visual Scan: {self.visual_context}", {"type": "vision_awareness", "window": w_title})
             
@@ -93,7 +91,6 @@ class VisualObserver:
                 except: pass
 
     def start(self):
-        # Background polling disabled. Eye operates strictly on demand now.
         print("[VISUAL_OBSERVER] Neural Optics loaded. (Event-Driven Mode)")
         self.active = True
 

@@ -10,7 +10,6 @@ def execute(params):
 
     print(f"JARVIS: Executing {os.path.basename(file_path)}...")
     try:
-        # Runs the script and shows the output in your terminal
         result = subprocess.run(["python", file_path], capture_output=True, text=True)
         print("-" * 30)
         print(result.stdout)

@@ -19,13 +19,11 @@ def execute(params):
         if spec is None or spec.loader is None:
             return f"Sir, I'm unable to load '{skill_name}' for testing. The module structure appears invalid."
         
-        module = importlib.util.module_from_spec(spec) # type: ignore
-        spec.loader.exec_module(module) # type: ignore
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
         
-        # Run the execute function
         result = module.execute(test_params)
         
-        # Log the test result
         log_path = os.path.join(SKILLS_DIR, "test_run.log")
         with open(log_path, "a") as log:
             from datetime import datetime
@@ -34,7 +32,6 @@ def execute(params):
             
         return f"Sir, the test run for '{skill_name}' is complete. The result was: {result}"
     except Exception as e:
-        # Log the failure
         log_path = os.path.join(SKILLS_DIR, "test_run.log")
         with open(log_path, "a") as log:
             from datetime import datetime

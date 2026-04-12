@@ -8,7 +8,6 @@ def test_skills():
         print(f"FAILED: {skills_dir} directory not found.")
         return
 
-    # Add repo root to path for shared imports
     sys.path.insert(0, os.getcwd())
 
     files = [f for f in os.listdir(skills_dir) if f.endswith(".py") and not f.startswith("__")]

@@ -6,17 +6,15 @@ import os
 def background_task(delay, skill_name, params, recurring=False, socketio=None):
     while True:
         time.sleep(delay)
-        # Execute skill
         try:
             skills_dir = os.path.dirname(__file__)
             skill_path = os.path.join(skills_dir, f"{skill_name}.py")
             spec = importlib.util.spec_from_file_location(skill_name, skill_path)
             if spec and spec.loader:
-                module = importlib.util.module_from_spec(spec) # type: ignore
-                spec.loader.exec_module(module) # type: ignore
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
                 result = module.execute(params)
 
-                # Notify the HUD about tool results (background tasks run outside core).
                 if socketio and result is not None:
                     try:
                         socketio.emit("new_message", {"sender": "jarvis", "text": str(result)})
@@ -29,7 +27,7 @@ def background_task(delay, skill_name, params, recurring=False, socketio=None):
             break
 
 def execute(params):
-    action = params.get("action") # schedule
+    action = params.get("action")
     delay_seconds = params.get("delay_seconds", 0)
     skill_to_run = params.get("skill_name")
     skill_params = params.get("params", {})
@@ -40,7 +38,6 @@ def execute(params):
         if not skill_to_run:
             return "Sir, I need a skill name to schedule."
 
-        # Ensure scheduled skills also receive _socketio if they want it.
         if socketio:
             try:
                 skill_params = dict(skill_params)
