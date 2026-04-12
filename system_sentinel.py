@@ -85,7 +85,7 @@ class SystemSentinel:
             "timestamp": datetime.now().isoformat()
         }
         
-        self.event_queue.put(event)
+        self.event_queue.put((3, time.time(), event))
         self.event_history[event_type] = now
         
         if priority == "high" or event_type in ["file_created", "scheduled_task"]:
